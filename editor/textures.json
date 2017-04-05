@@ -1,0 +1,28 @@
+{
+    "passables": [{
+        "key": "passable",
+        "type": "image"
+    }, {
+        "key": "unpassable",
+        "type": "image"
+    }],
+    "misc": [{
+        "key": "blank",
+        "type": "image"
+    }, {
+        "key": "highlight",
+        "type": "image"
+    }],
+    "structures": [{
+        "key": "townMap",
+        "type": "sheet"
+    }, {
+        "key": "final",
+        "type": "sheet"
+    }, {
+        "key": "redshrike",
+        "type": "sheet"
+    }],
+    "events": [],
+    "npcs": []
+}
