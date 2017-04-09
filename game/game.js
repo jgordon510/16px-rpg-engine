@@ -230,11 +230,10 @@ States.GameState.prototype = {
         });
     },
     renderPlayer: function() {
-        if(typeof game.player !== 'undefined')
-        {
+        if (typeof game.player !== 'undefined') {
             game.player.destroy();
         }
-        game.player = game.add.sprite((game.map.centerTile.x-1)*game.zoom, (game.map.centerTile.y-1)*game.zoom, 'sharm');
+        game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'sharm');
         game.player.scale.setTo(game.zoom);
     },
     renderEvents: function() {
@@ -261,7 +260,7 @@ States.GameState.prototype = {
         //with each keypress, after the tiles have been tweened 
         //and snapped back into place
         if (!game.moving) {
-            
+
             //this is the distance to move in each direction
             var offSetY = 0;
             var offSetX = 0;
@@ -279,38 +278,87 @@ States.GameState.prototype = {
                 offSetX = -1;
 
             }
-            //todo add passable check here
             //todo add character animation here
-            //this sween slides everything in the right directions
-            
+
             if (offSetX !== 0 || offSetY !== 0) {
-                game.moving = true;
-                
-                var tweenMap = game.add.tween(game.map).to({
-                    x: game.map.x + game.pxSize * game.zoom * offSetX,
-                    y: game.map.y + game.pxSize * game.zoom * offSetY
-                }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
-                //after it updates the data object,
-                //unsets the moving flag,
-                //and calls refresh()
-                tweenMap.onComplete.add(function() {
-                    game.offsets.x -= offSetX;
-                    game.offsets.y -= offSetY;
-                    game.moving = false;
-                    game.map.x = 0;
-                    game.map.y = 0;
-                    this.refresh();
-                }, this)
-                
-                //this gives it a little bounce before the refresh
-                var tweenPlayer = game.add.tween(game.player).to({
-                    x: game.player.x - game.pxSize * offSetX /2 ,
-                    y: game.player.y - game.pxSize  * offSetY /2
-                }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
+                var proposed = {
+                    x: offSetX,
+                    y: offSetY
+                };
+                //checkPath returns an object with new offsets
+                //it will set the offset to 0 if it's blocked
+                var checkedPath = this.checkPath(proposed);
+                offSetX = checkedPath.x;
+                offSetY = checkedPath.y;
+                //offSet X/Y is now set to 0 if it's blocked
+                if (offSetX !== 0 || offSetY !== 0) {
+                    game.moving = true;
+                    //this tween slides everything in the right directions
+                    var tweenMap = game.add.tween(game.map).to({
+                        x: game.map.x + game.pxSize * game.zoom * offSetX,
+                        y: game.map.y + game.pxSize * game.zoom * offSetY
+                    }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
+                    //after it updates the data object,
+                    //unsets the moving flag,
+                    //and calls refresh()
+                    tweenMap.onComplete.add(function() {
+                        game.offsets.x -= offSetX;
+                        game.offsets.y -= offSetY;
+                        game.moving = false;
+                        game.map.x = 0;
+                        game.map.y = 0;
+                        this.refresh();
+                    }, this)
+
+                    //this gives it a little bounce before the refresh
+                    var tweenPlayer = game.add.tween(game.player).to({
+                        x: game.player.x - game.pxSize * offSetX / 2,
+                        y: game.player.y - game.pxSize * offSetY / 2
+                    }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
+
+                }
+
             }
+
 
         }
 
+    },
+    checkPath: function(proposed) {
+        var offSetX = proposed.x;
+        var offSetY = proposed.y;
+        //this function checks the proposed path and returns
+        //an object containing the original offsets if it's clear
+        //but sets the offset to 0 if it's blocked.
+        //TODO deal with map edges also
+        if (offSetX > 0) { //left
+            //check index 0 of the one to the left
+            if (game.mapData.passables[game.map.centerTile.gridLocation.x - 1][game.map.centerTile.gridLocation.y][0]) {
+                offSetX = 0;
+            }
+        }
+        else if (offSetX < 0) { //right
+            //check index 0 of the current tile
+            if (game.mapData.passables[game.map.centerTile.gridLocation.x][game.map.centerTile.gridLocation.y][0]) {
+                offSetX = 0;
+            }
+        }
+        else if (offSetY < 0) { //down
+            //check index 1 of the current tile
+            if (game.mapData.passables[game.map.centerTile.gridLocation.x][game.map.centerTile.gridLocation.y][1]) {
+                offSetY = 0;
+            }
+        }
+        else if (offSetY > 0) { //up
+            //check index 1 of the one above
+            if (game.mapData.passables[game.map.centerTile.gridLocation.x][game.map.centerTile.gridLocation.y - 1][1]) {
+                offSetY = 0;
+            }
+        }
+        return {
+            x: offSetX,
+            y: offSetY
+        };
     },
     render: function() {
         //this shows the fps
