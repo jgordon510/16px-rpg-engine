@@ -3,7 +3,10 @@
         "key": "passable",
         "type": "image"
     }, {
-        "key": "unpassable",
+        "key": "unpassableRight",
+        "type": "image"
+    }, {
+        "key": "unpassableDown",
         "type": "image"
     }],
     "misc": [{
@@ -14,13 +17,46 @@
         "type": "image"
     }],
     "structures": [{
-        "key": "townMap",
+        "key": "sharm",
         "type": "sheet"
     }, {
-        "key": "final",
+        "key": "sharm2",
         "type": "sheet"
     }, {
-        "key": "redshrike",
+        "key": "sharm_forest",
+        "type": "sheet"
+    }, {
+        "key": "redshrike_basic",
+        "type": "sheet"
+    }, {
+        "key": "redshrike_ext",
+        "type": "sheet"
+    }, {
+        "key": "rubberduck_basic",
+        "type": "sheet"
+    }, {
+        "key": "rubberduck_cave",
+        "type": "sheet"
+    }, {
+        "key": "rubberduck_mountains",
+        "type": "sheet"
+    }, {
+        "key": "rubberduck_mountains2",
+        "type": "sheet"
+    }, {
+        "key": "rubberduck_other",
+        "type": "sheet"
+    }, {
+        "key": "rubberduck_water",
+        "type": "sheet"
+    }, {
+        "key": "mrBeast_sewer",
+        "type": "sheet"
+    }, {
+        "key": "mrBeast_cave",
+        "type": "sheet"
+    }, {
+        "key": "mrBeast_desert",
         "type": "sheet"
     }],
     "events": [],
