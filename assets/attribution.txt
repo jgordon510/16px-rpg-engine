@@ -1,3 +1,11 @@
+This attribution file is a work in progress.
+Generally, the texture files come from opengameart,and the 
+texture keys, along with the opengameart url is listed.
+
+In each case, the sheetMaker.sh script has processed the
+image by adding a 1px transparent border between each tiles
+in order to avoid pixel dithering between them.
+
 sharm (grimfist's extension):
 https://opengameart.org/content/tiny-16-basic
 
