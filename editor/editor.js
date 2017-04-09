@@ -54,7 +54,7 @@ States.EditorState.prototype = {
         game.drawing = false;
         //tracks where we've started drawing the rectangle
         game.rectStart = null;
-        //trackes where we've finished drawing the rectangle
+        //tracks where we've finished drawing the rectangle
         game.rectEnd = null;
         //the editor's zoom factor
         game.zoom = 2;
@@ -224,7 +224,6 @@ States.EditorState.prototype = {
         };
     },
     makeGrid: function() {
-        console.log("MAKING NEW GRID");
         //this function makes a group of blank tiles.
         //the blank tiles have no texture and are parents to everything else
         //this function is called by refresh
