@@ -1,17 +1,12 @@
 //  The Google WebFont Loader will look for this object, so create it before loading the script.
 WebFontConfig = {
-
-    //  'active' means all requested fonts have finished loading
-    //  We set a 1 second delay before calling 'createText'.
-    //  For some reason if we don't the browser cannot render the text the first time it's created.
-
     //  The Google Fonts we want to load (specify as many as you like in the array)
     google: {
         families: ['Inconsolata']
     }
 };
 
-var States = {};
+var States = {}; //an object to hold the game states
 
 //*****************************************************************************************
 //FONT LOAD STATE
@@ -22,20 +17,18 @@ States.LoadFonts.prototype = {
     preload: function() {
         //load the font script
         game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
-        game.load.json('textures', '/editor/textures.json');
-        game.time.advancedTiming = true;
+        game.load.json('textures', '/editor/textures.json'); //this describes the 16px tile textures
+        game.time.advancedTiming = true; //used to check the fps in the render function
     },
     create: function() {
-        game.stage.backgroundColor = '#333333';
-        // place the assets and elements in their initial positions, create the state 
+        game.stage.backgroundColor = '#333333'; //gray
+        //wait a second before starting the game
         game.time.events.add(Phaser.Timer.SECOND, startGame, this)
 
         function startGame() {
             game.state.start('EditorState');
         }
-
-    },
-    update: function() {}
+    }
 };
 
 var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, 'gameDiv', States.LoadFonts);
@@ -47,110 +40,145 @@ var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '
 States.EditorState = function() {};
 States.EditorState.prototype = {
     preload: function() {
+        //the saveCPU plugin reduces the idle CPU usage
+        //https://github.com/photonstorm/phaser-plugins/tree/master/SaveCPU
         this.game.plugins.add(Phaser.Plugin.SaveCPU);
+        //this is a general style for the menus
         game.style = {
             font: 'Inconsolata',
             fill: '#002222',
             align: 'center',
             fontSize: 34
         };
+        //tracks whether we're drawing
         game.drawing = false;
+        //tracks where we've started drawing the rectangle
         game.rectStart = null;
+        //trackes where we've finished drawing the rectangle
         game.rectEnd = null;
+        //the editor's zoom factor
         game.zoom = 2;
-        game.tileRotation = 0;
+        //the scroll offsets
         game.offsets = {
             x: 0,
             y: 0
         };
-        game.overTile = {
-            x: null,
-            y: null
-        };
-        game.tileSelection = {
-            start: null,
-            end: null
-        };
-        game.mode = 'P'; //passables
-        game.currentTexture = 'passable';
-        game.textureFrameNumber = 0;
-        game.textureType = 'image';
-        game.mapKey = 'testmap';
-        game.pxSize = 16;
-        game.selectionPanelWidth = 300;
+        // this describes the current edit mode
+        game.mode = 'P'; //default: passables
+        game.currentTexture = 'passable'; //default: clear unpassables
+        game.textureFrameNumber = 0; //used for spritesheets
+        game.textureType = 'image'; //or 'sheet'
+        game.mapKey = 'testmap'; //the default json file to load
+        game.pxSize = 16; //don't change
+        game.selectionPanelWidth = 300; //don't change
+        //load the default map file
         game.load.json('map', '/editor/maps/' + game.mapKey + '.json');
-
-        game.world.setBounds(-3000, -3000, 6000, 6000);
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
-        //Load all textures in the json file
-        //loaded in previous state
+        //Load all textures described in the textures.json file
         game.textures = game.cache.getJSON('textures');
         for (var key in game.textures) {
             if (game.textures.hasOwnProperty(key)) {
                 game.textures[key].forEach(function(texture) {
                     if (texture.type === "image") {
+                        //regular image
                         game.load.image(texture.key, '/assets/' + texture.key + '.png');
                     }
                     else if (texture.type === "sheet") {
+                        //spritesheet
+                        //each tile has a 1px border around it of transparency to avoid dithering
+                        //these files are created with the sheetMaker bash script in the assets folder
+                        //1px+16px+1px=18px
                         game.load.spritesheet(texture.key, '/assets/' + texture.key + '.png', 18, 18);
                     }
 
                 });
             }
         }
-        addFileDropper()
+        //this public function below creates a file dropper out of the gameDiv
+        //this way you can drop your saved jsons on it to load them
+        addFileDropper();
     },
     create: function() {
+        //a set of cursor keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
-
-        game.map = game.add.group();
-        game.rectangleGroup = game.add.group();
-        game.structureGroup = game.add.group();
-        game.selector = game.add.group();
-        game.mapData  = game.cache.getJSON('map');
-
-        this.makeSelector();
-        this.makeGrid();
-        this.renderPassables();
-        this.renderStructures();
-        this.renderEvents();
-        this.renderNPCS();
-        this.makeHighlightedTile();
-        this.setHighlightTexture('passable');
-        game.input.mouse.mouseWheelCallback = this.zoomView;
+        //a group to hold the blank map tiles that parent everything
+        //add a key for saving
         var saveKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
-        saveKey.onDown.add(this.saveMapJSON);
+        saveKey.onDown.add(this.saveMapJSON); //callback for saving
+        game.map = game.add.group();
+        //a group for the drawing rectangle
+        game.rectangleGroup = game.add.group();
+        //a group for the actual structures
+        game.structureGroup = game.add.group();
+        //a group for the selector menu
+        game.selector = game.add.group();
+        //an object containing the default mapData
+        game.mapData = game.cache.getJSON('map');
+
+        //create the selector menu on the right of the screen
+        this.makeSelector();
+        //make the grid of blank parent tiles
+        this.makeGrid();
+        //add the blank gray squares and passable lines to the grid
+        this.renderPassables();
+        //add the structures to the grid
+        this.renderStructures();
+        //TODO add events to the grid
+        this.renderEvents();
+        //TODO add NPCs to the grid
+        this.renderNPCS();
+        //create the highlighted tile that follows the mouse cursor 
+        this.makeHighlightedTile();
+        //it shows the current texture setting
+        this.setHighlightTexture('passable'); //default
+        //scrolling the mouse changes the zoom factor and calls refresh
+        game.input.mouse.mouseWheelCallback = this.zoomView;
     },
     makeHighlightedTile: function() {
+        //this function creates the highlighted tile
+        //this tile follows the mouse cursor, attaching itself to
+        //blank gridtiles.  It reflects the texture setting also
+        //through the setHighlightTexture.
+        //this is blank white, and is reset to something specific
         game.highlightTile = game.add.sprite(0, 0, 'highlight');
+        //so you can see what you're setting
         game.highlightTile.alpha = 0.75;
+        //start hidden
         game.highlightTile.visible = false;
     },
+    setHighlightTexture: function() {
+        console.log("settting texture");
+        //set it to the current texture
+        game.highlightTile.loadTexture(game.currentTexture);
+    },
     rectangleTexture: function(w, h) {
+        //this function recturns a bordered gray rectangle
+        //for use in the selector menu.
         var graphics = game.add.graphics(0, 0);
-        //Back
         graphics.beginFill(0xAAAAAA);
         graphics.lineStyle(5, 0xDDDDDD, 1);
         graphics.drawRect(0, 0, w, h);
         var texture = graphics.generateTexture();
-        graphics.destroy()
+        graphics.destroy();
         return texture;
     },
     makeSelector: function() {
+        //this function makes the selector menu
+        //it only happens once and isn't called by refresh
         game.selector.fixedToCamera = true;
-        //Back
+        //Back of Menu
         game.selector.selectionBack = game.add.sprite(game.width - game.selectionPanelWidth - 15, 0, this.rectangleTexture(game.selectionPanelWidth, game.height - 15));
         game.selector.add(game.selector.selectionBack);
-
         //Top Menu Back
         game.selector.topBack = game.add.sprite(game.width - game.selectionPanelWidth - 15 + 10, 10, this.rectangleTexture(game.selectionPanelWidth - 20, 100));
         game.selector.add(game.selector.topBack);
-
+        //Indicator text
+        //default:passables
         game.selector.indicator = game.add.text(game.selector.topBack.width / 2, 50, '- passables -', game.style);
         game.selector.indicator.anchor.setTo(0.5, 0)
-        game.selector.topBack.addChild(game.selector.indicator)
+        game.selector.topBack.addChild(game.selector.indicator);
         var buttonList = [{
             letter: 'P',
             key: 'passables',
@@ -168,45 +196,57 @@ States.EditorState.prototype = {
             key: 'npcs',
             title: '- NPCs -'
         }, ];
+        //these are the selector buttons
         var spacing = game.selectionPanelWidth / buttonList.length;
         buttonList.forEach(function(button, index) {
             var buttonSprite = game.add.text(index * spacing + 20, 10, button.letter, game.style);
             buttonSprite.inputEnabled = true;
             buttonSprite.input.useHandCursor = true;
-            buttonSprite.events.onInputDown.add(selectMode);
+            buttonSprite.events.onInputDown.add(selectMode); //see click callback below
             game.selector.topBack.addChild(buttonSprite);
 
-            function selectMode() {
-                game.selector.indicator.setText(button.title);
-                game.mode = button.letter;
-
-                newTextureGroup(button, 0);
-                States.EditorState.prototype.refresh();
+            if (index == 0) //default to passables on load
+            {
+                selectMode(); //this calls the newTextureGroup
             }
 
+            function selectMode() {
+                //this gets called when the buttons are pushed
+                game.selector.indicator.setText(button.title);
+                game.mode = button.letter;
+                //newTextureGroup is a public function below
+                newTextureGroup(button, 0); //create the texture buttons
+                States.EditorState.prototype.refresh();
+            }
         });
-        game.turnPage = function() {
-            console.log("You haven't selected a texture yet.")
+        game.turnPage = function() { //a default message you shouldn't see.
+            console.log("You haven't selected a texture yet.");
         };
     },
     makeGrid: function() {
-        console.log("MAKING NEW GRID")
-            //this function makes a group of blank tiles.
-            //the blank tiles have no te
-            //add a blank underTile to the map group
-        game.map.removeAll();
+        console.log("MAKING NEW GRID");
+        //this function makes a group of blank tiles.
+        //the blank tiles have no texture and are parents to everything else
+        //this function is called by refresh
+
+        game.map.removeAll(); //clear any previous grid
         game.map.scale.setTo(game.zoom, game.zoom);
         var tileSize = game.pxSize * game.zoom;
+        //dimensions for the bank tile sprites
         var width = Math.floor((game.width - game.selector.width) / tileSize);
         var height = Math.floor(game.height / tileSize);
 
+        //a grid of tile sprites
         for (var x = 0; x <= width; x++) {
             for (var y = 0; y <= height; y++) {
                 var tile = game.add.sprite(x * game.pxSize, y * game.pxSize, 'blank');
+                //this property is used to calculate positions
+                //the offset is used to scroll the position
                 tile.gridLocation = {
                     x: x + game.offsets.x,
                     y: y + game.offsets.y
                 };
+                //hide tiles beyond the grid
                 //left or above bounds
                 if (tile.gridLocation.x < 0 || tile.gridLocation.y < 0) {
                     tile.visible = false;
@@ -216,54 +256,58 @@ States.EditorState.prototype = {
                     tile.visible = false;
                 }
 
-                //tile.checkWorldBounds = true;
-
                 tile.inputEnabled = true;
-                //tile.input.useHandCursor = true;
-                //the endDraw function lacks the scope to reach the render functions
-                tile.renderPassables = this.renderPassables;
-                tile.renderStructures = this.renderStructures;
+                //these input functions control the drawing of texture rectangles
                 tile.events.onInputOver.add(highlightTile);
                 tile.events.onInputOut.add(unhighlighTile, tile);
                 tile.events.onInputDown.add(startDraw, tile);
                 tile.events.onInputUp.add(endDraw, this.renderPassables);
-                game.map.add(tile);
+                game.map.add(tile); //add to the group
             }
         }
 
         function highlightTile(tile) {
-
+            //called onInputOver
             game.highlightTile.visible = true;
-            game.rectangleGroup.removeAll();
-            tile.addChild(game.highlightTile)
+            game.rectangleGroup.removeAll(); //clear previous rectangles
+            //add the highlightTile to the blank tile sprite
+            tile.addChild(game.highlightTile);
 
             if (game.drawing) {
-                console.log("drawing highlighted");
                 game.highlightTile.visible = false;
+
                 game.endDraw = tile.gridLocation;
                 var startXs = [game.startDraw.x, game.endDraw.x];
                 var startYs = [game.startDraw.y, game.endDraw.y];
+                //sort them, so we can loop left to right; top to bottom
                 if (startXs[0] > startXs[1]) {
                     startXs = [startXs[1], startXs[0]]
                 }
                 if (startYs[0] > startYs[1]) {
                     startYs = [startYs[1], startYs[0]]
                 }
-                tiles();
+                rectangleGroupTiles();
 
-                function tiles() {
+                function rectangleGroupTiles() {
+                    //draw the actual tiles and add them to the group
                     for (var x = startXs[0]; x <= startXs[1]; x++) {
                         for (var y = startYs[0]; y <= startYs[1]; y++) {
-                            var rectTile = game.add.sprite((x - game.offsets.x) * game.pxSize * game.map.scale.x, (y - game.offsets.y) * game.pxSize * game.map.scale.y, game.currentTexture);
-                            rectTile.scale = game.map.scale;
+                            //calculate the locations based on the scroll offset, pixel size and zoom
+                            var xLoc = (x - game.offsets.x) * game.pxSize * game.map.scale.x;
+                            var yLoc = (y - game.offsets.y) * game.pxSize * game.map.scale.y;
+                            var rectTile = game.add.sprite(xLoc, yLoc, game.currentTexture);
+                            rectTile.scale = game.map.scale; //they're not part of the map group
                             //account for the 1px border on spritesheets
                             if (game.textureType === 'sheet') {
+                                //scoot them back and up 1px
                                 rectTile.x -= 1 * game.map.scale.x;
                                 rectTile.y -= 1 * game.map.scale.y;
                             }
+                            //transparent
                             rectTile.alpha = 0.5;
+                            //match the sheet frame
                             rectTile.frame = game.textureFrameNumber;
-
+                            //used in the setTiles function
                             rectTile.gridLocation = {
                                 x: x,
                                 y: y
@@ -272,73 +316,64 @@ States.EditorState.prototype = {
                         }
                     }
                 }
-
-
-
             }
         }
 
         function unhighlighTile() {
+            //called onInputOut
             game.highlightTile.visible = false;
         }
 
         function startDraw(tile) {
-            console.log("startDraw")
+            //called onInputDown
             game.drawing = true;
             game.startDraw = tile.gridLocation;
+            //game.endDraw is set constantly onInputOver in highlightTile
             //this ensures the rectangle is drawn on a single click
             highlightTile(tile);
         }
 
         function endDraw(sprite) {
-            console.log("endDraw")
+            //called onInputUp
             game.drawing = false;
-            //todo: currently this doesn't reflect anything but unpassable tiles
+            //use the rectangle group to manage game.mapData
             game.rectangleGroup.forEach(function(tile) {
                 setTiles(tile)
             });
-            sprite.renderPassables();
-            sprite.renderStructures();
-
+            //reset and refresh()
             game.startDraw = null;
             game.endDraw = null;
             game.rectangleGroup.removeAll();
+            //data is all ready, time to refresh
+            States.EditorState.prototype.refresh();
         }
-        //this.centerMap();
-    },
-    centerMap: function() {
-        game.camera.x = game.map.width / 2 - game.width / 2 + 300 / 2;
-        game.camera.y = game.map.height / 2 - game.height / 2;
     },
     renderPassables: function() {
         //This function adds the passables sprite layer.  They are
         //children of the game.map blank tiles.
         //go through the blank tiles looking at their location on the passables grid
         game.map.forEach(function(tile) {
+            //destroy any old passable sprite
             if (typeof tile.passableSprite !== 'undefined') {
+                console.log("This thing is preventable probably by refreshing prior to this.");
                 tile.passableSprite.destroy();
             }
-            // //mark the passable texture layer appropriately
-            // var textureKey = 'unpassable';
-            // //console.log(game.mapData.passables)
-            // if (typeof game.mapData.passables[tile.gridLocation.x] !== 'undefined') {
-            //     if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y]) {
-            //         textureKey = 'passable';
-            //     }
-            // }
-
+            //each tile has the basic gray box
             tile.passableSprite = game.add.sprite(0, 0, 'passable');
 
-            tile.addChild(tile.passableSprite);
-            if (typeof game.mapData.passables[tile.gridLocation.x] !== 'undefined') {
-                if (typeof game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] !== 'undefined') {
+            tile.addChild(tile.passableSprite); //add to the blank grid
+            //add the red lines for unpassableDown and Right
+            //TODO check these undefined checks:
+            //they might have been needed just for legacy files
+            if (typeof game.mapData.passables[tile.gridLocation.x] !== 'undefined') { //ugh!
+                if (typeof game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] !== 'undefined') { //double-ugh!
                     if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][0]) {
                         var blockedRight = game.add.sprite(0, 0, 'unpassableRight');
-                        tile.passableSprite.addChild(blockedRight)
+                        tile.passableSprite.addChild(blockedRight);
                     }
                     if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][1]) {
                         var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
-                        tile.passableSprite.addChild(blockedDown)
+                        tile.passableSprite.addChild(blockedDown);
                     }
                 }
 
@@ -377,13 +412,16 @@ States.EditorState.prototype = {
                 }
             });
         });
-        if (game.mode == 'P') {
+        if (game.mode == 'P') { //passables
+            //make the structure group semi-transparent so I can
+            //see the unpassable lines
             game.structureArray.forEach(function(structure) {
                 structure.alpha = 0.25;
             });
         }
         else {
             game.structureArray.forEach(function(structure) {
+                //make the structures opaque
                 structure.alpha = 1;
             });
         }
@@ -395,20 +433,21 @@ States.EditorState.prototype = {
         //todo
     },
     update: function() {
+        //this scans the keyboard for cursor presses
         this.scrollView();
     },
-    setHighlightTexture: function() {
-        console.log("settting texture")
-        game.highlightTile.loadTexture(game.currentTexture);
-    },
     refresh: function() {
-        console.log("refreshing")
+        //this function refreshes the entire grid
+        //it redraws everything
         this.makeGrid();
         this.renderPassables()
         this.renderStructures()
     },
     scrollView: function() {
-        var scrollSpeed = 5;
+        //this function is called by update and scrolls the view
+        //calling the refresh function means the grid is redrawn 
+        //with each keypress
+        //it also turns the texture selection pages when ctrl is pressed
         if (game.cursors.up.isDown) {
             game.offsets.y -= 1;
             this.refresh()
@@ -417,7 +456,7 @@ States.EditorState.prototype = {
             game.offsets.y += 1;
             this.refresh()
         }
-        if (game.cursors.left.isDown) {
+        if (game.cursors.left.isDown) { //selection page turn
             if (game.cursors.left.ctrlKey) {
                 game.turnPage(-1);
             }
@@ -427,94 +466,100 @@ States.EditorState.prototype = {
             }
         }
         else if (game.cursors.right.isDown) {
-            if (game.cursors.right.ctrlKey) {
+            if (game.cursors.right.ctrlKey) {//selection page turn
                 game.turnPage(1);
             }
             else {
                 game.offsets.x += 1;
                 this.refresh()
             }
-
         }
-
     },
     zoomView: function() {
-        if (!game.zooming) {
-            console.log("zooming")
-            game.zooming = true;
-
+        //this function adjusts the tile zoom on mouse scroll
+        if (!game.zooming) { //used to timeout the function
+            game.zooming = true; //timeout
+            //adjust the zoom
             game.zoom += game.input.mouse.wheelDelta / 2;
-            if (game.zoom < 0.5) {
+            
+            if (game.zoom < 0.5) {//min
                 game.zoom = 0.5;
             }
-            else if (game.zoom > 4) {
+            else if (game.zoom > 4) {//max
                 game.zoom = 4;
             }
-
+            //call a refresh
             States.EditorState.prototype.refresh();
             setTimeout(function() {
-                game.zooming = false;
+                game.zooming = false; //reset timeout flag
             }, 500);
         }
 
     },
     saveMapJSON: function(key) {
-        //check to see if CTRL is pressed
+        //called when 'S' key is pressed
+        //still need to check to see if CTRL is pressed
         if (key.ctrlKey) {
             var str = JSON.stringify(game.mapData);
             var blob = new Blob([str], {
                 type: "text/plain;charset=utf-8"
             });
-            saveAs(blob, "newmap.json");
+            saveAs(blob, "newmap.json");  //FileSaver.js
         }
     },
     render: function() {
+        //this shows the fps
         //game.debug.text(game.time.fps || '--', 2, 14, "#00ff00");
     }
 };
 
 game.state.add('EditorState', States.EditorState);
 
+//this public function manages the mapData object
+//it doesn't add tiles to the map itself; refresh handles that
+//it has a switch statement that deals with different game modes
 function setTiles(tile) {
     switch (game.mode) {
         case 'P': //passables
-            console.log(game.currentTexture)
             var passable = game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y];
-            if (game.currentTexture === 'passable') {
+            if (game.currentTexture === 'passable') { //clear both flags
                 passable[0] = 0;
                 passable[1] = 0;
             }
             else if (game.currentTexture === 'unpassableRight') {
                 console.log("setting right")
-                passable[0] = 1;
+                passable[0] = 1;  //flag right
             }
             else if (game.currentTexture === 'unpassableDown') {
                 console.log("setting down")
-                passable[1] = 1;
+                passable[1] = 1;  //flag down
             }
-
             break;
         case 'S':
-            console.log("structure");
-            console.log(game.currentTexture, game.textureFrameNumber)
+            //an object representing the current structure
             var structure = {
                 key: game.currentTexture,
                 frame: game.textureFrameNumber,
                 x: tile.gridLocation.x,
                 y: tile.gridLocation.y
             };
+            //if I already have this structure, I don't need two
             game.mapData.structures.forEach(function(existingStructure, index) {
+                //this function is below and compares two object for sameness
                 if (isEquivalent(existingStructure, structure)) {
-                    console.log("deleting duplicate tiles")
+                    //delete the old one
                     game.mapData.structures.splice(index, 1);
                 }
             });
+            //set the data
             game.mapData.structures.push(structure);
             break;
         default:
             console.log("unspecified mode!");
     }
-
+    
+    //this function compares two object and returns true if they're identical
+    //http://adripofjavascript.com/blog/drips/object-equality-in-javascript.html
     function isEquivalent(a, b) {
         // Create arrays of property names
         var aProps = Object.getOwnPropertyNames(a);
@@ -542,30 +587,35 @@ function setTiles(tile) {
     }
 }
 
+//this public function makes the group containing the 
+//texture setting buttons
 function newTextureGroup(button, page) {
-
+    //this function turns the page left and right
     game.turnPage = function(direction) {
         if (!game.turningPage) {
-            game.turningPage = true;
-            newTextureGroup(button, page + direction);
+            game.turningPage = true; //flag for timeout
+            newTextureGroup(button, page + direction); //recursive
             setTimeout(function() {
-                game.turningPage = false;
+                game.turningPage = false; //reset
             }, 100);
         }
-
     };
 
+    //get rid of the old page
     if (typeof game.textureGroup !== 'undefined') {
         game.textureGroup.destroy();
     }
     game.textureGroup = game.add.group();
+    //a child of the panel, a little offset
     game.textureGroup.x = game.selectionPanelWidth * .1 - 10;
     game.selector.addChild(game.textureGroup);
-    var boxCounter = 0;
-
-    var frameCount = 0;
-    var frames = [];
-    var textureStartIndices = [];
+    var frameCount = 0;  //counter for the texture frame
+    var frames = [];  //array to hold the frames
+    //a list of the startIndices of the various textures
+    var textureStartIndices = [];  
+    //create the list of startIndices, so we know when to start
+    //each texture in the stack
+    //Also, append the frames to the frameArray
     game.textures[button.key].forEach(function(texture, i) {
         textureStartIndices.push({
             key: texture.key,
@@ -575,48 +625,58 @@ function newTextureGroup(button, page) {
         var frameArray = game.cache.getFrameData(texture.key).getFrames();
         frames = frames.concat(frameArray);
     });
-
+    
+    //loop negatives to the end
     if (page < 0) page = Math.floor(frames.length / 21);
+    //1/4:small enough to fit 3
     var boxWidth = game.selectionPanelWidth * .25;
+    //3x7 for long stacks
+    //3x1 for the passables
     for (var column = 0; column < 3; column++) {
-        for (var row = 0; row < 7; row++) {
-            if (frameCount < frames.length) {}
-
+        for (var row = 0; row < (game.mode === 'S' ? 7 : 1); row++) {
             //box and button
             var texture = null;
+            //based on how far we are in the frames stack, I set the texture
             textureStartIndices.forEach(function(checkTexture) {
                 if (checkTexture.index <= (frameCount + page * 21) % frames.length) {
-                    texture = checkTexture;
+                    texture = checkTexture; //last to qualify one is correct
                 }
             });
-            var xLoc = game.selector.selectionBack.x + 10 + (boxCounter % 3 * (boxWidth * 1.1));
-            var yLoc = Math.floor(boxCounter / 3) * (boxWidth * 1.1) + 160;
+            //calculate the x/y Locs 
+            var xLoc = game.selector.selectionBack.x + 10 + (frameCount % 3 * (boxWidth * 1.1));
+            var yLoc = Math.floor(frameCount / 3) * (boxWidth * 1.1) + 160;
+            //use the rectangleTexture function to get a box
             var textureBox = game.add.sprite(xLoc, yLoc, States.EditorState.prototype.rectangleTexture(boxWidth, boxWidth));
+            //button stuff
             textureBox.inputEnabled = true;
             textureBox.input.useHandCursor = true;
-            textureBox.events.onInputDown.add(setTexture);
+            textureBox.events.onInputDown.add(setTexture); //below
+            //properties used by setTexture()
             textureBox.frameNumber = (frameCount + page * 21) % frames.length - texture.index;
             textureBox.textureData = texture;
-
+            
+            //a picture of the texture added as a child
             var textureSample = game.add.sprite(textureBox.width / 2, textureBox.height / 2, texture.key, textureBox.frameNumber);
             textureSample.height = textureBox.height * .7;
             textureSample.width = textureBox.height * .7;
             textureSample.anchor.setTo(0.5, 0.5);
             textureBox.addChild(textureSample);
+            //add to the group
             game.textureGroup.add(textureBox);
             frameCount++;
-            boxCounter++;
-
+                
+            //called when the texture is clicked
             function setTexture(sprite, pointer) {
                 var frameNumber = sprite.frameNumber
                 var texture = sprite.textureData
+                //public properties
                 game.currentTexture = texture.key;
-
-                game.highlightTile.loadTexture(game.currentTexture);
-                game.highlightTile.frame = frameNumber;
                 game.textureFrameNumber = frameNumber;
                 game.textureType = texture.type;
-                //account for the 1px border on spritesheets
+                //change the highlightTile
+                game.highlightTile.loadTexture(game.currentTexture);
+                game.highlightTile.frame = frameNumber;
+                //account for the 1px transparent border on spritesheets
                 if (texture.type === 'sheet') {
                     game.highlightTile.x = -1;
                     game.highlightTile.y = -1;
@@ -626,14 +686,16 @@ function newTextureGroup(button, page) {
                     game.highlightTile.y = 0;
                 }
             }
-
         }
     }
 }
 
+//this is a public function for creating a blank map
 function blankMap() {
+    //get the width/height
     var width = parseInt(prompt("Enter width: "));
     var height = parseInt(prompt("Enter height: "));
+    //a blank passables array
     var passables = [];
     for (var y = 0; y < height; y++) {
         var row = [];
@@ -642,24 +704,29 @@ function blankMap() {
         }
         passables.push(row);
     }
-    console.log(passables);
     game.mapData.passables = passables;
+    //size properties
     game.mapData.size = {
         x: width,
         y: height
     };
+    //a blank structures array
     game.mapData.structures = [];
 
-    States.EditorState.prototype.makeGrid()
+    //load it up
+    States.EditorState.prototype.makeGrid();
     States.EditorState.prototype.renderPassables();
     States.EditorState.prototype.renderStructures();
-    console.log(game.mapData)
 }
 
+//this public function adds a file dropper so the user
+//can drop saved json files onto the window and load them
 function addFileDropper() {
     //http://stackoverflow.com/questions/10261989/html5-javascript-drag-and-drop-file-from-external-window-windows-explorer
+    //the gameDiv itself is the dropZone
     var dropZone = document.getElementById('gameDiv');
 
+    //dragover event
     dropZone.addEventListener('dragover', function(e) {
         e.stopPropagation();
         e.preventDefault();
@@ -674,15 +741,15 @@ function addFileDropper() {
         for (var i = 0, file; file = files[i]; i++) {
             var reader = new FileReader();
             reader.onload = function(e2) {
+                //e2.target.result is the raw data stream
+                //load the json from it
                 $.getJSON(e2.target.result, function(json) {
-                    game.mapData  = json;
-                    States.EditorState.prototype.makeGrid()
-                    States.EditorState.prototype.renderPassables();
-                    States.EditorState.prototype.renderStructures();
+                    //set the mapData
+                    game.mapData = json;
+                    States.EditorState.prototype.refresh();
                 });
             }
             reader.readAsDataURL(file); // start reading the file data.
         }
     });
-
 }
