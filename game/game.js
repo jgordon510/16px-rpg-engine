@@ -266,7 +266,6 @@ States.GameState.prototype = {
     },
     turnPlayer: function() {
         if (!game.turning&&game.moving) {
-            //this is temporary
             game.turning = true;
             if (game.playerDirection.x === 1) {
                 game.player.targetFrame = 3;
@@ -283,23 +282,15 @@ States.GameState.prototype = {
 
             game.player.frame = game.oldPlayerFrame;
             if (typeof game.player.frame === 'undefined') {
+                console.log("setting frame to 0")
                 game.player.frame = 0;
-            }
-            if (Math.abs(game.player.frame - game.player.targetFrame ) > 3) {
-                game.player.frame = game.player.targetFrame
-            }
-            else {
-                if (game.player.frame <= game.player.targetFrame + 1) {
-                    game.player.frame++;
-                }
-                else if (game.player.frame > game.player.targetFrame + 1) {
-                    game.player.frame--;
-                }
+                game.playerFrameOffset = 0;
             }
 
+            game.player.frame = game.player.targetFrame+game.playerFrameOffset%3;
+            game.playerFrameOffset++;
             game.player.frame = game.player.frame % 12;
             game.oldPlayerFrame = game.player.frame;
-            console.log(game.player.frame)
             setTimeout(function() {
                 game.turning = false;
             }, game.moveTimeout / 3);
