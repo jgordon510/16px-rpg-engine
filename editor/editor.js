@@ -678,7 +678,7 @@ function newTextureGroup(button, page) {
                     game.oldSelected.tint = 0xffffff;
                 }
                 game.oldSelected = sprite;
-                sprite.tint = 0xffff00;
+                sprite.tint = 0xffcccc;
                 //public properties
                 game.currentTexture = texture.key;
                 game.textureFrameNumber = frameNumber;
