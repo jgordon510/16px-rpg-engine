@@ -52,17 +52,19 @@ States.GameState.prototype = {
         };
         //the game's zoom factor
         game.zoom = 4;
+        game.pxSize = 16; //don't change
         //the scroll offsets
         game.offsets = {
-            x: 0,
-            y: 0
+            x: -Math.floor(game.width / (game.zoom*game.pxSize)/2),
+            y: -Math.floor(game.height / (game.zoom*game.pxSize)/2)
         };
+        console.log(game.offsets)
         game.playerDirection =  {
             x: 0,
             y: 0
         };
         game.mapKey = 'maze50'; //the default json file to load
-        game.pxSize = 16; //don't change
+        
         game.moveTimeout = 300;
         game.load.json('map', '/editor/maps/' + game.mapKey + '.json');
         //this removes any dithering from scaling
@@ -103,6 +105,8 @@ States.GameState.prototype = {
         game.structureGroup = game.add.group();
         //an object containing the default mapData
         game.mapData = game.cache.getJSON('map');
+        game.offsets.x += game.mapData.start.x;
+        game.offsets.y += game.mapData.start.y;
 
         //make the grid of blank parent tiles
         this.makeGrid();

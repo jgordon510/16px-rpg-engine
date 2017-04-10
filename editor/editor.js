@@ -470,7 +470,7 @@ States.EditorState.prototype = {
             }
             else {
                 game.offsets.x += 1;
-                this.refresh()
+                this.refresh();
             }
         }
     },
@@ -705,6 +705,7 @@ function blankMap() {
     }
     game.mapData.passables = passables;
     //size properties
+    game.mapData.start = game.offsets;
     game.mapData.size = {
         x: width,
         y: height
