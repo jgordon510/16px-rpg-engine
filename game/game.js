@@ -54,11 +54,11 @@ States.GameState.prototype = {
         game.zoom = 4;
         game.pxSize = 16; //don't change
         //the scroll offsets
+        //we want to scroll back half each dimension in tiles
         game.offsets = {
             x: -Math.floor(game.width / (game.zoom*game.pxSize)/2),
             y: -Math.floor(game.height / (game.zoom*game.pxSize)/2)
         };
-        console.log(game.offsets)
         game.playerDirection =  {
             x: 0,
             y: 0
@@ -95,8 +95,7 @@ States.GameState.prototype = {
         addFileDropper();
     },
     create: function() {
-        console.log("here")
-            //a set of cursor keys for navigation
+        //a set of cursor keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
         //a group to hold the blank map tiles that parent everything
         //add a key for saving
@@ -105,6 +104,7 @@ States.GameState.prototype = {
         game.structureGroup = game.add.group();
         //an object containing the default mapData
         game.mapData = game.cache.getJSON('map');
+        //adjust the offsets by the start position
         game.offsets.x += game.mapData.start.x;
         game.offsets.y += game.mapData.start.y;
 
