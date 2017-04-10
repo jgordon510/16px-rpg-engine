@@ -265,7 +265,8 @@ States.GameState.prototype = {
         this.turnPlayer();
     },
     turnPlayer: function() {
-        if (!game.turning) {
+        if (!game.turning&&game.moving) {
+            //this is temporary
             game.turning = true;
             if (game.playerDirection.x === 1) {
                 game.player.targetFrame = 3;
@@ -301,7 +302,7 @@ States.GameState.prototype = {
             console.log(game.player.frame)
             setTimeout(function() {
                 game.turning = false;
-            }, game.moveTimeout / 6);
+            }, game.moveTimeout / 3);
 
         }
 
