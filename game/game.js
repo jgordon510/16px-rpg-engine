@@ -56,15 +56,15 @@ States.GameState.prototype = {
         //the scroll offsets
         //we want to scroll back half each dimension in tiles
         game.offsets = {
-            x: -Math.floor(game.width / (game.zoom*game.pxSize)/2),
-            y: -Math.floor(game.height / (game.zoom*game.pxSize)/2)
+            x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
+            y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
         };
-        game.playerDirection =  {
+        game.playerDirection = {
             x: 0,
             y: 0
         };
         game.mapKey = 'maze50'; //the default json file to load
-        
+
         game.moveTimeout = 300;
         game.load.json('map', '/editor/maps/' + game.mapKey + '.json');
         //this removes any dithering from scaling
@@ -121,6 +121,7 @@ States.GameState.prototype = {
         //TODO add NPCs to the grid
         // this.renderNPCS();
         this.renderPlayer();
+        game.player.frame = 0
     },
     rectangleTexture: function(w, h) {
         //this function recturns a bordered gray rectangle
@@ -239,25 +240,17 @@ States.GameState.prototype = {
     },
     renderPlayer: function() {
         if (typeof game.player !== 'undefined') {
+
             game.player.destroy();
         }
-        
-        game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'sharm');
-        game.player.frame = 52;
-        //TODO directional costumes here
-        if(game.playerDirection.x === 1)
-        {
-             
-        } else if(game.playerDirection.x === -1)
-        {
-            
-        }else if(game.playerDirection.y === 1)
-        {
-            
-        }else if(game.playerDirection.y === -1)
-        {
-            
+        else {
+            game.oldPlayerFrame = 0;
         }
+
+        game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'player');
+        game.player.frame = game.oldPlayerFrame;
+
+        console.log(game.player.frame)
         game.player.scale.setTo(game.zoom);
     },
     renderEvents: function() {
@@ -269,6 +262,49 @@ States.GameState.prototype = {
     update: function() {
         //this scans the keyboard for cursor presses
         this.scrollView();
+        this.turnPlayer();
+    },
+    turnPlayer: function() {
+        if (!game.turning) {
+            game.turning = true;
+            if (game.playerDirection.x === 1) {
+                game.player.targetFrame = 3;
+            }
+            else if (game.playerDirection.x === -1) {
+                game.player.targetFrame = 6;
+            }
+            else if (game.playerDirection.y === 1) {
+                game.player.targetFrame = 9;
+            }
+            else if (game.playerDirection.y === -1) {
+                game.player.targetFrame = 0;
+            }
+
+            game.player.frame = game.oldPlayerFrame;
+            if (typeof game.player.frame === 'undefined') {
+                game.player.frame = 0;
+            }
+            if (Math.abs(game.player.frame - game.player.targetFrame ) > 3) {
+                game.player.frame = game.player.targetFrame
+            }
+            else {
+                if (game.player.frame <= game.player.targetFrame + 1) {
+                    game.player.frame++;
+                }
+                else if (game.player.frame > game.player.targetFrame + 1) {
+                    game.player.frame--;
+                }
+            }
+
+            game.player.frame = game.player.frame % 12;
+            game.oldPlayerFrame = game.player.frame;
+            console.log(game.player.frame)
+            setTimeout(function() {
+                game.turning = false;
+            }, game.moveTimeout / 6);
+
+        }
+
     },
     refresh: function() {
         //this function refreshes the entire grid
@@ -309,11 +345,11 @@ States.GameState.prototype = {
                     x: offSetX,
                     y: offSetY
                 };
-                
+
                 //checkPath returns an object with new offsets
                 //it will set the offset to 0 if it's blocked
                 var checkedPath = this.checkPath(proposed);
-                
+
                 offSetX = checkedPath.x;
                 offSetY = checkedPath.y;
                 //offSet X/Y is now set to 0 if it's blocked

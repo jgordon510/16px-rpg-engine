@@ -1,4 +1,8 @@
 {
+    "player": [{
+        "key": "player",
+        "type": "sheet"
+    }],
     "passables": [{
         "key": "passable",
         "type": "image"
