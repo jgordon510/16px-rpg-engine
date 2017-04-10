@@ -633,6 +633,7 @@ function newTextureGroup(button, page) {
     //3x1 for the passables
     for (var column = 0; column < 3; column++) {
         for (var row = 0; row < (game.mode === 'S' ? 7 : 1); row++) {
+            
             //box and button
             var texture = null;
             //based on how far we are in the frames stack, I set the texture
@@ -663,27 +664,41 @@ function newTextureGroup(button, page) {
             //add to the group
             game.textureGroup.add(textureBox);
             frameCount++;
-                
+            if(column == 0 & row == 0)
+            {
+                game.currentTexture = texture.key;
+                setTexture(textureBox)
+            }   
             //called when the texture is clicked
             function setTexture(sprite, pointer) {
                 var frameNumber = sprite.frameNumber
                 var texture = sprite.textureData
+                if(typeof game.oldSelected!=='undefined')
+                {
+                    game.oldSelected.tint = 0xffffff;
+                }
+                game.oldSelected = sprite;
+                sprite.tint = 0xffff00;
                 //public properties
                 game.currentTexture = texture.key;
                 game.textureFrameNumber = frameNumber;
                 game.textureType = texture.type;
-                //change the highlightTile
-                game.highlightTile.loadTexture(game.currentTexture);
-                game.highlightTile.frame = frameNumber;
-                //account for the 1px transparent border on spritesheets
-                if (texture.type === 'sheet') {
-                    game.highlightTile.x = -1;
-                    game.highlightTile.y = -1;
+                if(typeof game.highlightTile !== 'undefined')
+                {
+                   //change the highlightTile
+                   game.highlightTile.loadTexture(game.currentTexture);
+                   game.highlightTile.frame = frameNumber;
+                   //account for the 1px transparent border on spritesheets
+                   if (texture.type === 'sheet') {
+                       game.highlightTile.x = -1;
+                       game.highlightTile.y = -1;
+                   }
+                   else { //don't account for it
+                       game.highlightTile.x = 0;
+                       game.highlightTile.y = 0;
+                   } 
                 }
-                else { //don't account for it
-                    game.highlightTile.x = 0;
-                    game.highlightTile.y = 0;
-                }
+                
             }
         }
     }
