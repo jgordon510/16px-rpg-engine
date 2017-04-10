@@ -57,9 +57,13 @@ States.GameState.prototype = {
             x: 0,
             y: 0
         };
-        game.mapKey = 'testmap'; //the default json file to load
+        game.playerDirection =  {
+            x: 0,
+            y: 0
+        };
+        game.mapKey = 'maze50'; //the default json file to load
         game.pxSize = 16; //don't change
-        game.moveTimeout = 500;
+        game.moveTimeout = 300;
         game.load.json('map', '/editor/maps/' + game.mapKey + '.json');
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
@@ -233,7 +237,23 @@ States.GameState.prototype = {
         if (typeof game.player !== 'undefined') {
             game.player.destroy();
         }
+        
         game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'sharm');
+        game.player.frame = 52;
+        //TODO directional costumes here
+        if(game.playerDirection.x === 1)
+        {
+             
+        } else if(game.playerDirection.x === -1)
+        {
+            
+        }else if(game.playerDirection.y === 1)
+        {
+            
+        }else if(game.playerDirection.y === -1)
+        {
+            
+        }
         game.player.scale.setTo(game.zoom);
     },
     renderEvents: function() {
@@ -285,13 +305,16 @@ States.GameState.prototype = {
                     x: offSetX,
                     y: offSetY
                 };
+                
                 //checkPath returns an object with new offsets
                 //it will set the offset to 0 if it's blocked
                 var checkedPath = this.checkPath(proposed);
+                
                 offSetX = checkedPath.x;
                 offSetY = checkedPath.y;
                 //offSet X/Y is now set to 0 if it's blocked
                 if (offSetX !== 0 || offSetY !== 0) {
+                    game.playerDirection = checkedPath;
                     game.moving = true;
                     //this tween slides everything in the right directions
                     var tweenMap = game.add.tween(game.map).to({
