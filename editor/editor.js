@@ -72,7 +72,7 @@ States.EditorState.prototype = {
         game.pxSize = 16; //don't change
         game.selectionPanelWidth = 300; //don't change
         //load the default map file
-        game.load.json('map', '/editor/maps/' + game.mapKey + '.json');
+        game.load.json('map', '../editor/maps/' + game.mapKey + '.json');
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
@@ -83,14 +83,14 @@ States.EditorState.prototype = {
                 game.textures[key].forEach(function(texture) {
                     if (texture.type === "image") {
                         //regular image
-                        game.load.image(texture.key, '/assets/' + texture.key + '.png');
+                        game.load.image(texture.key, '../assets/' + texture.key + '.png');
                     }
                     else if (texture.type === "sheet") {
                         //spritesheet
                         //each tile has a 1px border around it of transparency to avoid dithering
                         //these files are created with the sheetMaker bash script in the assets folder
                         //1px+16px+1px=18px
-                        game.load.spritesheet(texture.key, '/assets/' + texture.key + '.png', 18, 18);
+                        game.load.spritesheet(texture.key, '../assets/' + texture.key + '.png', 18, 18);
                     }
 
                 });

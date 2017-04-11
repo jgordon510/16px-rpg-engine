@@ -66,7 +66,7 @@ States.GameState.prototype = {
         game.mapKey = 'maze50'; //the default json file to load
 
         game.moveTimeout = 300;
-        game.load.json('map', '/editor/maps/' + game.mapKey + '.json');
+        game.load.json('map', '../editor/maps/' + game.mapKey + '.json');
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
@@ -77,14 +77,14 @@ States.GameState.prototype = {
                 game.textures[key].forEach(function(texture) {
                     if (texture.type === "image") {
                         //regular image
-                        game.load.image(texture.key, '/assets/' + texture.key + '.png');
+                        game.load.image(texture.key, '../assets/' + texture.key + '.png');
                     }
                     else if (texture.type === "sheet") {
                         //spritesheet
                         //each tile has a 1px border around it of transparency to avoid dithering
                         //these files are created with the sheetMaker bash script in the assets folder
                         //1px+16px+1px=18px
-                        game.load.spritesheet(texture.key, '/assets/' + texture.key + '.png', 18, 18);
+                        game.load.spritesheet(texture.key, '../assets/' + texture.key + '.png', 18, 18);
                     }
 
                 });
@@ -121,7 +121,7 @@ States.GameState.prototype = {
         //TODO add NPCs to the grid
         // this.renderNPCS();
         this.renderPlayer();
-        game.player.frame = 0
+        game.player.frame = 0;
     },
     rectangleTexture: function(w, h) {
         //this function recturns a bordered gray rectangle
@@ -246,11 +246,8 @@ States.GameState.prototype = {
         else {
             game.oldPlayerFrame = 0;
         }
-
         game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'player');
         game.player.frame = game.oldPlayerFrame;
-
-        console.log(game.player.frame)
         game.player.scale.setTo(game.zoom);
     },
     renderEvents: function() {
@@ -265,7 +262,7 @@ States.GameState.prototype = {
         this.turnPlayer();
     },
     turnPlayer: function() {
-        if (!game.turning&&game.moving) {
+        if (!game.turning && game.moving) {
             game.turning = true;
             if (game.playerDirection.x === 1) {
                 game.player.targetFrame = 3;
@@ -282,12 +279,10 @@ States.GameState.prototype = {
 
             game.player.frame = game.oldPlayerFrame;
             if (typeof game.player.frame === 'undefined') {
-                console.log("setting frame to 0")
                 game.player.frame = 0;
                 game.playerFrameOffset = 0;
             }
-
-            game.player.frame = game.player.targetFrame+game.playerFrameOffset%3;
+            game.player.frame = game.player.targetFrame + game.playerFrameOffset % 3;
             game.playerFrameOffset++;
             game.player.frame = game.player.frame % 12;
             game.oldPlayerFrame = game.player.frame;
@@ -312,7 +307,6 @@ States.GameState.prototype = {
         //with each keypress, after the tiles have been tweened 
         //and snapped back into place
         if (!game.moving) {
-
             //this is the distance to move in each direction
             var offSetY = 0;
             var offSetX = 0;
@@ -363,7 +357,7 @@ States.GameState.prototype = {
                         game.map.x = 0;
                         game.map.y = 0;
                         this.refresh();
-                    }, this)
+                    }, this);
 
                     //this gives it a little bounce before the refresh
                     var tweenPlayer = game.add.tween(game.player).to({
@@ -453,7 +447,7 @@ function addFileDropper() {
                     game.mapData = json;
                     States.GameState.prototype.refresh();
                 });
-            }
+            };
             reader.readAsDataURL(file); // start reading the file data.
         }
     });
