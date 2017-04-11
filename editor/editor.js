@@ -124,7 +124,7 @@ States.EditorState.prototype = {
         game.selector = game.add.group();
         //an object containing the default mapData
         game.mapData = game.cache.getJSON('map');
-            //create the selector menu on the right of the screen
+        //create the selector menu on the right of the screen
         this.makeSelector();
         //make the grid of blank parent tiles
         this.makeGrid();
@@ -194,14 +194,14 @@ States.EditorState.prototype = {
             key: 'structures',
             title: '- structures -'
         }, {
-            letter: 'E',
-            key: 'events',
-            title: '- edits -'
-        }, {
             letter: 'N',
             key: 'npcs',
             title: '- NPCs -'
-        }, ];
+        }, {
+            letter: 'E',
+            key: 'events',
+            title: '- extras -'
+        }];
         //these are the selector buttons
         var spacing = game.selectionPanelWidth / buttonList.length;
         buttonList.forEach(function(button, index) {
@@ -337,8 +337,8 @@ States.EditorState.prototype = {
             //game.endDraw is set constantly onInputOver in highlightTile
             //this ensures the rectangle is drawn on a single click
             highlightTile(tile);
-            game.mapData.structures.forEach(function(structure){
-                structure.highlighted = false;    
+            game.mapData.structures.forEach(function(structure) {
+                structure.highlighted = false;
             });
         }
 
@@ -376,14 +376,20 @@ States.EditorState.prototype = {
             //they might have been needed just for legacy files
             if (typeof game.mapData.passables[tile.gridLocation.x] !== 'undefined') { //ugh!
                 if (typeof game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] !== 'undefined') { //double-ugh!
-                    if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][0]) {
-                        var blockedRight = game.add.sprite(0, 0, 'unpassableRight');
-                        tile.passableSprite.addChild(blockedRight);
+                    if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] !== null) {
+                        if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][0]) {
+                            var blockedRight = game.add.sprite(0, 0, 'unpassableRight');
+                            tile.passableSprite.addChild(blockedRight);
+                        }
+                        if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][1]) {
+                            var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
+                            tile.passableSprite.addChild(blockedDown);
+                        }
                     }
-                    if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][1]) {
-                        var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
-                        tile.passableSprite.addChild(blockedDown);
+                    else {
+                        game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] = [0, 0]
                     }
+
                 }
 
             }
@@ -557,10 +563,10 @@ States.EditorState.prototype = {
                 }
 
             }
-
+            // Put the object into storage
+            localStorage.setItem('clipboard', JSON.stringify(game.clipboard));
             States.EditorState.prototype.refresh();
         }
-
     },
     cutSelection: function(key) {
         if (key.ctrlKey) {
@@ -573,25 +579,45 @@ States.EditorState.prototype = {
         if (key.ctrlKey) {
             var top = 10000;
             var left = 10000;
+            var right = 0;
+            var bottom = 0;
+            // Retrieve the object from storage
+            // this allows the copying of structures between windows, but not art 
+            game.clipboard = JSON.parse(localStorage.getItem('clipboard'));
+            console.log(game.clipboard)
             game.clipboard.forEach(function(structure) {
                 structure.highlighted = false;
-                if(structure.x < left)
-                {
+                if (structure.x < left) {
                     left = structure.x;
                 }
-                if(structure.y < top)
-                {
+                if (structure.y < top) {
                     top = structure.y;
+                }
+                if (structure.x > right) {
+                    right = structure.x;
+                }
+                if (structure.y > bottom) {
+                    bottom = structure.y;
                 }
             });
             game.clipboard.reverse().forEach(function(structure) {
                 game.mapData.structures.push({
-                    x:(structure.x-left)+game.highlightTile.gridLocation.x,
-                    y:(structure.y-top)+game.highlightTile.gridLocation.y,
-                    key:structure.key,
-                    frame:structure.frame
+                    x: (structure.x - left) + game.highlightTile.gridLocation.x,
+                    y: (structure.y - top) + game.highlightTile.gridLocation.y,
+                    key: structure.key,
+                    frame: structure.frame
                 });
             });
+            for (var x = -1; x <= right - left; x++) {
+                for (var y = -1; y <= bottom - top; y++) {
+                    if (left + x > 0 && top + y > 0) {
+                        game.mapData.passables[x + game.highlightTile.gridLocation.x][y + game.highlightTile.gridLocation.y] = game.mapData.passables[left + x][top + y].slice();
+                    }
+                    else {
+                        console.log("out of bounds!")
+                    }
+                }
+            }
             game.clipboard.reverse();
             States.EditorState.prototype.refresh();
         }
@@ -722,11 +748,12 @@ $(document).bind("keydown", function(e) {
     if (e.keyCode == 8) { // backspace
         e.preventDefault()
             // do whatever the backspace should do
+        localStorage.setItem('clipboard', JSON.stringify([]));
         game.clipboard = [];
         for (var i = game.mapData.structures.length - 1; i >= 0; i--) {
             var structure = game.mapData.structures[i];
             if (structure.highlighted) {
-                game.clipboard.push(structure);
+                //game.clipboard.push(structure);
 
                 game.mapData.structures.splice(i, 1);
 
