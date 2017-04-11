@@ -1,6 +1,24 @@
 {
     "player": [{
-        "key": "player",
+        "key": "player_baby",
+        "type": "sheet"
+    },{
+        "key": "player_boy",
+        "type": "sheet"
+    },{
+        "key": "player_ghost",
+        "type": "sheet"
+    },{
+        "key": "player_girl",
+        "type": "sheet"
+    },{
+        "key": "player_skeleton",
+        "type": "sheet"
+    },{
+        "key": "player_slime",
+        "type": "sheet"
+    },{
+        "key": "player_spider",
         "type": "sheet"
     }],
     "passables": [{

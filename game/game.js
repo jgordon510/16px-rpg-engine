@@ -44,6 +44,9 @@ States.GameState.prototype = {
         //https://github.com/photonstorm/phaser-plugins/tree/master/SaveCPU
         this.game.plugins.add(Phaser.Plugin.SaveCPU);
         //this is a general style for the menus
+        var sheetChoices = ['baby','boy','ghost','girl','skeleton','slime','spider'];
+        var randomIndex = Math.floor(Math.random()*sheetChoices.length);
+        game.playerSheet = sheetChoices[randomIndex];
         game.style = {
             font: 'Inconsolata',
             fill: '#002222',
@@ -246,7 +249,7 @@ States.GameState.prototype = {
         else {
             game.oldPlayerFrame = 0;
         }
-        game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'player');
+        game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'player_' + game.playerSheet);
         game.player.frame = game.oldPlayerFrame;
         game.player.scale.setTo(game.zoom);
     },
