@@ -71,6 +71,7 @@ States.EditorState.prototype = {
         game.mapKey = 'testmap'; //the default json file to load
         game.pxSize = 16; //don't change
         game.selectionPanelWidth = 300; //don't change
+        game.textureColumn = 0;
         //load the default map file
         game.load.json('map', '../editor/maps/' + game.mapKey + '.json');
         //this removes any dithering from scaling
@@ -105,8 +106,15 @@ States.EditorState.prototype = {
         game.cursors = game.input.keyboard.createCursorKeys();
         //a group to hold the blank map tiles that parent everything
         //add a key for saving
-        var saveKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
-        saveKey.onDown.add(this.saveMapJSON); //callback for saving
+        game.saveKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
+        game.saveKey.onDown.add(this.saveMapJSON); //callback for saving
+        game.copyKey = game.input.keyboard.addKey(Phaser.Keyboard.C);
+        game.copyKey.onDown.add(this.copySelection); //callback for copy
+        game.cutKey = game.input.keyboard.addKey(Phaser.Keyboard.X);
+        game.cutKey.onDown.add(this.cutSelection); //callback for cut
+        game.pasteKey = game.input.keyboard.addKey(Phaser.Keyboard.V);
+        game.pasteKey.onDown.add(this.pasteSelection); //callback for paste
+        game.clipboard = [];
         game.map = game.add.group();
         //a group for the drawing rectangle
         game.rectangleGroup = game.add.group();
@@ -116,8 +124,7 @@ States.EditorState.prototype = {
         game.selector = game.add.group();
         //an object containing the default mapData
         game.mapData = game.cache.getJSON('map');
-
-        //create the selector menu on the right of the screen
+            //create the selector menu on the right of the screen
         this.makeSelector();
         //make the grid of blank parent tiles
         this.makeGrid();
@@ -149,7 +156,6 @@ States.EditorState.prototype = {
         game.highlightTile.visible = false;
     },
     setHighlightTexture: function() {
-        console.log("settting texture");
         //set it to the current texture
         game.highlightTile.loadTexture(game.currentTexture);
     },
@@ -190,7 +196,7 @@ States.EditorState.prototype = {
         }, {
             letter: 'E',
             key: 'events',
-            title: '- events -'
+            title: '- edits -'
         }, {
             letter: 'N',
             key: 'npcs',
@@ -271,6 +277,7 @@ States.EditorState.prototype = {
             game.rectangleGroup.removeAll(); //clear previous rectangles
             //add the highlightTile to the blank tile sprite
             tile.addChild(game.highlightTile);
+            game.highlightTile.gridLocation = tile.gridLocation
 
             if (game.drawing) {
                 game.highlightTile.visible = false;
@@ -330,6 +337,9 @@ States.EditorState.prototype = {
             //game.endDraw is set constantly onInputOver in highlightTile
             //this ensures the rectangle is drawn on a single click
             highlightTile(tile);
+            game.mapData.structures.forEach(function(structure){
+                structure.highlighted = false;    
+            });
         }
 
         function endDraw(sprite) {
@@ -402,6 +412,10 @@ States.EditorState.prototype = {
                     //add the sprite as a child to the blank tile, reflecting the texture and frame
                     var structSprite = game.add.sprite(-1, -1, structure.key);
                     structSprite.frame = structure.frame;
+                    if (structure.highlighted) {
+                        structSprite.tint = 0xCCCCCC;
+                        //structure.highlighted = false;
+                    }
                     tile.addChild(structSprite);
                     //two stacks:
                     //the game stack allows for public manipulation of all structures
@@ -427,6 +441,24 @@ States.EditorState.prototype = {
     },
     renderEvents: function() {
         //todo
+        game.prompedForEventKey = false;
+        game.map.forEach(function(tile) {
+            //destroy any old passable sprite
+            if (typeof tile.eventSprite !== 'undefined') {
+                console.log("This thing is preventable probably by refreshing prior to this.");
+                tile.eventSprite.destroy();
+            }
+            //each tile has the basic gray box
+            game.mapData.events.forEach(function(event) {
+                if (event.x == tile.gridLocation.x && event.y == tile.gridLocation.y) {
+                    tile.eventSprite = game.add.sprite(0, 0, 'event');
+                    tile.addChild(tile.eventSprite); //add to the blank grid 
+                    tile.eventSprite.alpha = 0.2
+                }
+            })
+
+
+        });
     },
     renderNPCS: function() {
         //todo
@@ -439,8 +471,9 @@ States.EditorState.prototype = {
         //this function refreshes the entire grid
         //it redraws everything
         this.makeGrid();
-        this.renderPassables()
-        this.renderStructures()
+        this.renderPassables();
+        this.renderStructures();
+        this.renderEvents();
     },
     scrollView: function() {
         //this function is called by update and scrolls the view
@@ -465,7 +498,7 @@ States.EditorState.prototype = {
             }
         }
         else if (game.cursors.right.isDown) {
-            if (game.cursors.right.ctrlKey) {//selection page turn
+            if (game.cursors.right.ctrlKey) { //selection page turn
                 game.turnPage(1);
             }
             else {
@@ -480,11 +513,11 @@ States.EditorState.prototype = {
             game.zooming = true; //timeout
             //adjust the zoom
             game.zoom += game.input.mouse.wheelDelta / 2;
-            
-            if (game.zoom < 0.5) {//min
+
+            if (game.zoom < 0.5) { //min
                 game.zoom = 0.5;
             }
-            else if (game.zoom > 4) {//max
+            else if (game.zoom > 4) { //max
                 game.zoom = 4;
             }
             //call a refresh
@@ -503,12 +536,66 @@ States.EditorState.prototype = {
             var blob = new Blob([str], {
                 type: "text/plain;charset=utf-8"
             });
-            saveAs(blob, "newmap.json");  //FileSaver.js
+            saveAs(blob, "newmap.json"); //FileSaver.js
         }
     },
     render: function() {
         //this shows the fps
         //game.debug.text(game.time.fps || '--', 2, 14, "#00ff00");
+    },
+    copySelection: function(key) {
+        if (key.ctrlKey || key.cut) {
+            game.clipboard = [];
+            for (var i = game.mapData.structures.length - 1; i >= 0; i--) {
+                var structure = game.mapData.structures[i];
+                if (structure.highlighted) {
+                    game.clipboard.push(structure);
+                    structure.highlighted = false;
+                    if (key.cut) {
+                        game.mapData.structures.splice(i, 1);
+                    }
+                }
+
+            }
+
+            States.EditorState.prototype.refresh();
+        }
+
+    },
+    cutSelection: function(key) {
+        if (key.ctrlKey) {
+            States.EditorState.prototype.copySelection({
+                cut: true
+            });
+        }
+    },
+    pasteSelection: function(key) {
+        if (key.ctrlKey) {
+            var top = 10000;
+            var left = 10000;
+            game.clipboard.forEach(function(structure) {
+                structure.highlighted = false;
+                if(structure.x < left)
+                {
+                    left = structure.x;
+                }
+                if(structure.y < top)
+                {
+                    top = structure.y;
+                }
+            });
+            game.clipboard.reverse().forEach(function(structure) {
+                game.mapData.structures.push({
+                    x:(structure.x-left)+game.highlightTile.gridLocation.x,
+                    y:(structure.y-top)+game.highlightTile.gridLocation.y,
+                    key:structure.key,
+                    frame:structure.frame
+                });
+            });
+            game.clipboard.reverse();
+            States.EditorState.prototype.refresh();
+        }
+
     }
 };
 
@@ -526,12 +613,10 @@ function setTiles(tile) {
                 passable[1] = 0;
             }
             else if (game.currentTexture === 'unpassableRight') {
-                console.log("setting right")
-                passable[0] = 1;  //flag right
+                passable[0] = 1; //flag right
             }
             else if (game.currentTexture === 'unpassableDown') {
-                console.log("setting down")
-                passable[1] = 1;  //flag down
+                passable[1] = 1; //flag down
             }
             break;
         case 'S':
@@ -553,10 +638,55 @@ function setTiles(tile) {
             //set the data
             game.mapData.structures.push(structure);
             break;
+        case 'E':
+            //an object representing the current structure
+
+            if (game.textureColumn == 0) //event
+            {
+                if (!game.prompedForEventKey) {
+                    game.prompedForEventKey = true;
+                    var key = prompt("Enter the event key: ");
+                }
+
+                var event = {
+                    key: key,
+                    x: tile.gridLocation.x,
+                    y: tile.gridLocation.y
+                };
+                //if I already have an event here, I don't need two
+                game.mapData.events.forEach(function(existingEvent, index) {
+                    //this function is below and compares two object for sameness
+                    if (existingEvent.x === tile.gridLocation.x && existingEvent.y === tile.gridLocation.y) {
+                        game.mapData.event.splice(index, 1);
+                    }
+                });
+                //set the data
+                game.mapData.events.push(event);
+            }
+            else if (game.textureColumn == 1) {
+                game.mapData.structures.forEach(function(existingStructure, index) {
+                    //this function is below and compares two object for sameness
+                    if (existingStructure.x === tile.gridLocation.x && existingStructure.y === tile.gridLocation.y) {
+                        existingStructure.highlighted = true;
+                    }
+                });
+            }
+            else if (game.textureColumn == 2) {
+                //if I already have an event here, I don't need two
+                for (var i = game.mapData.structures.length - 1; i >= 0; i--) {
+                    var existingStructure = game.mapData.structures[i];
+                    if (existingStructure.x === tile.gridLocation.x && existingStructure.y === tile.gridLocation.y) {
+                        game.mapData.structures.splice(i, 1);
+                    }
+                }
+            }
+
+
+            break;
         default:
             console.log("unspecified mode!");
     }
-    
+
     //this function compares two object and returns true if they're identical
     //http://adripofjavascript.com/blog/drips/object-equality-in-javascript.html
     function isEquivalent(a, b) {
@@ -584,7 +714,28 @@ function setTiles(tile) {
         // are considered equivalent
         return true;
     }
+
 }
+
+//https://gist.github.com/mattcolman/493c216211edc87bc8e9
+$(document).bind("keydown", function(e) {
+    if (e.keyCode == 8) { // backspace
+        e.preventDefault()
+            // do whatever the backspace should do
+        game.clipboard = [];
+        for (var i = game.mapData.structures.length - 1; i >= 0; i--) {
+            var structure = game.mapData.structures[i];
+            if (structure.highlighted) {
+                game.clipboard.push(structure);
+
+                game.mapData.structures.splice(i, 1);
+
+            }
+
+        }
+        States.EditorState.prototype.refresh();
+    }
+});
 
 //this public function makes the group containing the 
 //texture setting buttons
@@ -608,10 +759,10 @@ function newTextureGroup(button, page) {
     //a child of the panel, a little offset
     game.textureGroup.x = game.selectionPanelWidth * .1 - 10;
     game.selector.addChild(game.textureGroup);
-    var frameCount = 0;  //counter for the texture frame
-    var frames = [];  //array to hold the frames
+    var frameCount = 0; //counter for the texture frame
+    var frames = []; //array to hold the frames
     //a list of the startIndices of the various textures
-    var textureStartIndices = [];  
+    var textureStartIndices = [];
     //create the list of startIndices, so we know when to start
     //each texture in the stack
     //Also, append the frames to the frameArray
@@ -624,7 +775,7 @@ function newTextureGroup(button, page) {
         var frameArray = game.cache.getFrameData(texture.key).getFrames();
         frames = frames.concat(frameArray);
     });
-    
+
     //loop negatives to the end
     if (page < 0) page = Math.floor(frames.length / 21);
     //1/4:small enough to fit 3
@@ -633,7 +784,7 @@ function newTextureGroup(button, page) {
     //3x1 for the passables
     for (var column = 0; column < 3; column++) {
         for (var row = 0; row < (game.mode === 'S' ? 7 : 1); row++) {
-            
+
             //box and button
             var texture = null;
             //based on how far we are in the frames stack, I set the texture
@@ -653,8 +804,9 @@ function newTextureGroup(button, page) {
             textureBox.events.onInputDown.add(setTexture); //below
             //properties used by setTexture()
             textureBox.frameNumber = (frameCount + page * 21) % frames.length - texture.index;
+            textureBox.column = column;
             textureBox.textureData = texture;
-            
+
             //a picture of the texture added as a child
             var textureSample = game.add.sprite(textureBox.width / 2, textureBox.height / 2, texture.key, textureBox.frameNumber);
             textureSample.height = textureBox.height * .7;
@@ -664,17 +816,16 @@ function newTextureGroup(button, page) {
             //add to the group
             game.textureGroup.add(textureBox);
             frameCount++;
-            if(column == 0 & row == 0)
-            {
+            if (column == 0 & row == 0) {
                 game.currentTexture = texture.key;
                 setTexture(textureBox)
-            }   
+            }
             //called when the texture is clicked
             function setTexture(sprite, pointer) {
                 var frameNumber = sprite.frameNumber
+                game.textureColumn = sprite.column;
                 var texture = sprite.textureData
-                if(typeof game.oldSelected!=='undefined')
-                {
+                if (typeof game.oldSelected !== 'undefined') {
                     game.oldSelected.tint = 0xffffff;
                 }
                 game.oldSelected = sprite;
@@ -683,22 +834,21 @@ function newTextureGroup(button, page) {
                 game.currentTexture = texture.key;
                 game.textureFrameNumber = frameNumber;
                 game.textureType = texture.type;
-                if(typeof game.highlightTile !== 'undefined')
-                {
-                   //change the highlightTile
-                   game.highlightTile.loadTexture(game.currentTexture);
-                   game.highlightTile.frame = frameNumber;
-                   //account for the 1px transparent border on spritesheets
-                   if (texture.type === 'sheet') {
-                       game.highlightTile.x = -1;
-                       game.highlightTile.y = -1;
-                   }
-                   else { //don't account for it
-                       game.highlightTile.x = 0;
-                       game.highlightTile.y = 0;
-                   } 
+                if (typeof game.highlightTile !== 'undefined') {
+                    //change the highlightTile
+                    game.highlightTile.loadTexture(game.currentTexture);
+                    game.highlightTile.frame = frameNumber;
+                    //account for the 1px transparent border on spritesheets
+                    if (texture.type === 'sheet') {
+                        game.highlightTile.x = -1;
+                        game.highlightTile.y = -1;
+                    }
+                    else { //don't account for it
+                        game.highlightTile.x = 0;
+                        game.highlightTile.y = 0;
+                    }
                 }
-                
+
             }
         }
     }

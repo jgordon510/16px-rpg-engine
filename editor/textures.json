@@ -81,6 +81,15 @@
         "key": "mrBeast_desert",
         "type": "sheet"
     }],
-    "events": [],
+    "events": [{
+        "key": "event",
+        "type":"image"
+    },{
+        "key": "select",
+        "type":"image"
+    },{
+        "key": "delete",
+        "type":"image"
+    }],
     "npcs": []
 }
