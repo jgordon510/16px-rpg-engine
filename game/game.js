@@ -43,10 +43,14 @@ States.GameState.prototype = {
         //the saveCPU plugin reduces the idle CPU usage
         //https://github.com/photonstorm/phaser-plugins/tree/master/SaveCPU
         this.game.plugins.add(Phaser.Plugin.SaveCPU);
-        //this is a general style for the menus
+        //Temporary:
+        //load with a random player texture
+        //There will be a general settings object that replaces many of these settings
+        //This will be tied to the map key in a json file and will override defaults
         var sheetChoices = ['baby','boy','ghost','girl','skeleton','slime','spider'];
         var randomIndex = Math.floor(Math.random()*sheetChoices.length);
         game.playerSheet = sheetChoices[randomIndex];
+        //this is a general style for the menus
         game.style = {
             font: 'Inconsolata',
             fill: '#002222',
@@ -367,14 +371,9 @@ States.GameState.prototype = {
                         x: game.player.x - game.pxSize * offSetX / 2,
                         y: game.player.y - game.pxSize * offSetY / 2
                     }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
-
                 }
-
             }
-
-
         }
-
     },
     checkPath: function(proposed) {
         var offSetX = proposed.x;
