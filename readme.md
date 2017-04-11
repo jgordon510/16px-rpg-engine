@@ -7,9 +7,11 @@ Currently, the map defaults to a 50x50 blank grid.  Running the blankGrid() func
 Passables allow for blocking player movement.  Select the proper icon to block the right or bottom path from the tile.  They can be combines.  The blank square clears both paths.  (Blocking the bottom, also blocks movement from the square below, as does right to left.)
 ## S - Structures
 The structures menu is populated with the tile graphics.  Most of these come from opengameart.  You can place and combine them with the mouse, after selecting your texture.  Dragging will create a rectangular pattern of them.  CTRL-Left/Right to switch pages.
-## E - Events
-INCOMPLETE - You'll be able to set a key that specifies a function to run in the events switch.
+## E - Extras
+This menu allows you to add events and an event key (currently not working), or select an area of the map.  Once selected, the area can be deleted (backspace), cut (ctrl-x), or copied (crtl-c).  Once an area is copied to the clipboard, pressing ctrl-v will paste the blocks at the mouselocation.  It is even possible to copy and paste between editor windows, but passables will not transfer.
 ## N - NPCs
 INCOMPLETE - You'll be able to add an NPC, that will have a key to specify its dialog.
 ## Controls
 Use the arrow keys to move around.  Scrolling your mouse will zoom the view in and out, but zooming out will slow down movement significantly.  CTRL-Left/Right will allow you to switch pages in the Structures menu. CTRL-S to save and download the file to your computer.  You can drag the file onto the editor window to load the file.
+# Game
+The game is a work in progress.  Currently navigation works, as well as passable detection.
