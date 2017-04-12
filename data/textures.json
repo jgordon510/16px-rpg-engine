@@ -48,6 +48,9 @@
         "key": "sharm2",
         "type": "sheet"
     }, {
+        "key": "sharm_town",
+        "type": "sheet"
+    }, {
         "key": "sharm_forest",
         "type": "sheet"
     }, {
