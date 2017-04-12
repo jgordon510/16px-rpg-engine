@@ -48,7 +48,7 @@ States.GameState.prototype = {
         //load with a random player texture
         //There will be a general settings object that replaces many of these settings
         //This will be tied to the map key in a json file and will override defaults
-        var sheetChoices = ['baby', 'boy', 'ghost', 'girl', 'skeleton', 'slime', 'spider'];
+        var sheetChoices = ['baby', 'boy', 'ghost', 'girl', 'skeleton', 'slime', 'spider', 'gator'];
         var randomIndex = Math.floor(Math.random() * sheetChoices.length);
         game.playerSheet = sheetChoices[randomIndex];
         swal("Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!', "success")

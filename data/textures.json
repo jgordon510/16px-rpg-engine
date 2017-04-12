@@ -20,6 +20,9 @@
     },{
         "key": "player_spider",
         "type": "sheet"
+    },{
+        "key": "player_gator",
+        "type": "sheet"
     }],
     "passables": [{
         "key": "passable",
