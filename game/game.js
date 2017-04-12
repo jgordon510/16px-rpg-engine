@@ -17,8 +17,8 @@ States.LoadFonts.prototype = {
     preload: function() {
         //load the font script
         game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
-        game.load.json('textures', '/editor/textures.json'); //this describes the 16px tile textures
-        game.load.json('mapList', 'maps.json');
+        game.load.json('textures', '/data/textures.json'); //this describes the 16px tile textures
+        game.load.json('mapList', '../data/mapList.json');
         game.time.advancedTiming = true; //used to check the fps in the render function
     },
     create: function() {
@@ -78,7 +78,7 @@ States.GameState.prototype = {
         game.mapList = game.cache.getJSON('mapList');
         console.log(game.mapList)
         game.mapList.forEach(function(key){
-            game.load.json(key, '../editor/maps/' + key + '.json');
+            game.load.json(key, '../data/maps/' + key + '.json');
         });
         
 

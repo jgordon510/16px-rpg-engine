@@ -17,7 +17,7 @@ States.LoadFonts.prototype = {
     preload: function() {
         //load the font script
         game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
-        game.load.json('textures', '/editor/textures.json'); //this describes the 16px tile textures
+        game.load.json('textures', '../data/textures.json'); //this describes the 16px tile textures
         game.time.advancedTiming = true; //used to check the fps in the render function
     },
     create: function() {
@@ -73,7 +73,7 @@ States.EditorState.prototype = {
         game.selectionPanelWidth = 300; //don't change
         game.textureColumn = 0;
         //load the default map file
-        game.load.json('map', '../editor/maps/' + game.mapKey + '.json');
+        game.load.json('map', '../data/maps/' + game.mapKey + '.json');
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
