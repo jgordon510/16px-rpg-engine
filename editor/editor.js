@@ -107,7 +107,7 @@ States.EditorState.prototype = {
         //a group to hold the blank map tiles that parent everything
         //add a key for saving
         game.saveKey = game.input.keyboard.addKey(Phaser.Keyboard.S);
-        game.saveKey.onDown.add(this.saveMapJSON); //callback for saving
+        game.saveKey.onDown.add(this.sKeyDown); //callback for saving
         game.copyKey = game.input.keyboard.addKey(Phaser.Keyboard.C);
         game.copyKey.onDown.add(this.copySelection); //callback for copy
         game.cutKey = game.input.keyboard.addKey(Phaser.Keyboard.X);
@@ -534,15 +534,20 @@ States.EditorState.prototype = {
         }
 
     },
-    saveMapJSON: function(key) {
+    sKeyDown: function(key) {
         //called when 'S' key is pressed
-        //still need to check to see if CTRL is pressed
-        if (key.ctrlKey) {
+        if (key.ctrlKey) { //SAVE
             var str = JSON.stringify(game.mapData);
             var blob = new Blob([str], {
                 type: "text/plain;charset=utf-8"
             });
             saveAs(blob, "newmap.json"); //FileSaver.js
+        }
+        else if (key.altKey) //SET STARTPOINT for map data
+        {
+            game.mapData.start.x = game.offsets.x;
+            game.mapData.start.y = game.offsets.y;
+            swal("Map startpoint set!", game.mapData.start.x + ',' + game.mapData.start.y , "success")
         }
     },
     render: function() {
@@ -674,6 +679,10 @@ function setTiles(tile) {
                     var key = prompt("Enter the event key: ");
                 }
 
+                if(typeof key === 'undefined')
+                {
+                    var key = game.mapData.events[game.mapData.events.length-1].key;
+                }
                 var event = {
                     key: key,
                     x: tile.gridLocation.x,

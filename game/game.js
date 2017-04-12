@@ -51,7 +51,8 @@ States.GameState.prototype = {
         var sheetChoices = ['baby', 'boy', 'ghost', 'girl', 'skeleton', 'slime', 'spider'];
         var randomIndex = Math.floor(Math.random() * sheetChoices.length);
         game.playerSheet = sheetChoices[randomIndex];
-        //this is a general style for the menus
+        swal("Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!', "success")
+            //this is a general style for the menus
         game.style = {
             font: 'Inconsolata',
             fill: '#002222',
@@ -71,18 +72,18 @@ States.GameState.prototype = {
             x: 0,
             y: 0
         };
-        game.mapKey = 'maze50'; //the default json file to load
+        game.mapKey = 'introStart'; //the default json file to load
 
         game.moveTimeout = 300;
-        
+
         game.mapList = game.cache.getJSON('mapList');
         console.log(game.mapList)
-        game.mapList.forEach(function(key){
+        game.mapList.forEach(function(key) {
             game.load.json(key, '../data/maps/' + key + '.json');
         });
-        
 
-        
+
+
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
@@ -325,6 +326,7 @@ States.GameState.prototype = {
             if (event.x === game.map.centerTile.gridLocation.x) {
                 if (event.y === game.map.centerTile.gridLocation.y) {
                     console.log("touching event:", event.key)
+                    console.log(event.key)
                     Events[event.key]();
                 }
             }
@@ -362,7 +364,6 @@ States.GameState.prototype = {
                 offSetX = -1;
 
             }
-            //todo add character animation here
 
             if (offSetX !== 0 || offSetY !== 0) {
                 var proposed = {
