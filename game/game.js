@@ -18,6 +18,7 @@ States.LoadFonts.prototype = {
         //load the font script
         game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
         game.load.json('textures', '/editor/textures.json'); //this describes the 16px tile textures
+        game.load.json('mapList', 'maps.json');
         game.time.advancedTiming = true; //used to check the fps in the render function
     },
     create: function() {
@@ -47,8 +48,8 @@ States.GameState.prototype = {
         //load with a random player texture
         //There will be a general settings object that replaces many of these settings
         //This will be tied to the map key in a json file and will override defaults
-        var sheetChoices = ['baby','boy','ghost','girl','skeleton','slime','spider'];
-        var randomIndex = Math.floor(Math.random()*sheetChoices.length);
+        var sheetChoices = ['baby', 'boy', 'ghost', 'girl', 'skeleton', 'slime', 'spider'];
+        var randomIndex = Math.floor(Math.random() * sheetChoices.length);
         game.playerSheet = sheetChoices[randomIndex];
         //this is a general style for the menus
         game.style = {
@@ -73,7 +74,15 @@ States.GameState.prototype = {
         game.mapKey = 'maze50'; //the default json file to load
 
         game.moveTimeout = 300;
-        game.load.json('map', '../editor/maps/' + game.mapKey + '.json');
+        
+        game.mapList = game.cache.getJSON('mapList');
+        console.log(game.mapList)
+        game.mapList.forEach(function(key){
+            game.load.json(key, '../editor/maps/' + key + '.json');
+        });
+        
+
+        
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
@@ -101,6 +110,15 @@ States.GameState.prototype = {
         //this way you can drop your saved jsons on it to load them
         addFileDropper();
     },
+    reload: function() {
+        game.map.destroy();
+        game.structureGroup.destroy();
+        game.offsets = {
+            x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
+            y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
+        };
+        this.create();
+    },
     create: function() {
         //a set of cursor keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
@@ -110,7 +128,8 @@ States.GameState.prototype = {
         //a group for the actual structures
         game.structureGroup = game.add.group();
         //an object containing the default mapData
-        game.mapData = game.cache.getJSON('map');
+        console.log(game.mapKey)
+        game.mapData = game.cache.getJSON(game.mapKey);
         //adjust the offsets by the start position
         game.offsets.x += game.mapData.start.x;
         game.offsets.y += game.mapData.start.y;
@@ -266,9 +285,10 @@ States.GameState.prototype = {
     update: function() {
         //this scans the keyboard for cursor presses
         this.scrollView();
-        this.turnPlayer();
+        this.animatePlayer();
+
     },
-    turnPlayer: function() {
+    animatePlayer: function() {
         if (!game.turning && game.moving) {
             game.turning = true;
             if (game.playerDirection.x === 1) {
@@ -300,6 +320,16 @@ States.GameState.prototype = {
         }
 
     },
+    checkEvents: function() {
+        game.mapData.events.forEach(function(event) {
+            if (event.x === game.map.centerTile.gridLocation.x) {
+                if (event.y === game.map.centerTile.gridLocation.y) {
+                    console.log("touching event:", event.key)
+                    Events[event.key]();
+                }
+            }
+        });
+    },
     refresh: function() {
         //this function refreshes the entire grid
         //it redraws everything
@@ -307,6 +337,7 @@ States.GameState.prototype = {
         //this.renderPassables()
         this.renderStructures();
         this.renderPlayer();
+        States.GameState.prototype.checkEvents();
     },
     scrollView: function() {
         //this function is called by update and scrolls the view
@@ -347,6 +378,7 @@ States.GameState.prototype = {
                 offSetY = checkedPath.y;
                 //offSet X/Y is now set to 0 if it's blocked
                 if (offSetX !== 0 || offSetY !== 0) {
+
                     game.playerDirection = checkedPath;
                     game.moving = true;
                     //this tween slides everything in the right directions
