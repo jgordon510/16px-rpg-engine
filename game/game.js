@@ -2,7 +2,7 @@
 WebFontConfig = {
     //  The Google Fonts we want to load (specify as many as you like in the array)
     google: {
-        families: ['Inconsolata']
+        families: ['Inconsolata', 'Press+Start+2P::latin']
     }
 };
 
@@ -51,8 +51,8 @@ States.GameState.prototype = {
         var sheetChoices = ['baby', 'boy', 'ghost', 'girl', 'skeleton', 'slime', 'spider', 'gator'];
         var randomIndex = Math.floor(Math.random() * sheetChoices.length);
         game.playerSheet = sheetChoices[randomIndex];
-        swal("Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!', "success")
-            //this is a general style for the menus
+
+        //this is a general style for the menus
         game.style = {
             font: 'Inconsolata',
             fill: '#002222',
@@ -128,6 +128,7 @@ States.GameState.prototype = {
         //a group for the actual structures
         game.structureGroup = game.add.group();
         //an object containing the default mapData
+
         console.log(game.mapKey)
         game.mapData = game.cache.getJSON(game.mapKey);
         //adjust the offsets by the start position
@@ -155,6 +156,19 @@ States.GameState.prototype = {
         //TODO add NPCs to the grid
         // this.renderNPCS();
         this.renderPlayer();
+        game.menu = Menu.create();
+        //swal("Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!', "success")
+        if (!game.displayedWelcome) {
+            game.displayedWelcome = true;
+            game.menu.new({
+                w: game.width * .5,
+                h: game.width * .2,
+                x: game.width * .25,
+                y: 100,
+                type: 'infoPanel',
+                text: ["Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!']
+            });
+        }
         game.player.frame = 0;
     },
     rectangleTexture: function(w, h) {
@@ -232,7 +246,7 @@ States.GameState.prototype = {
                 var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
                 tile.passableSprite.addChild(blockedDown);
             }
-            
+
         });
     },
     renderStructures: function() {
@@ -293,7 +307,7 @@ States.GameState.prototype = {
 
     },
     animatePlayer: function() {
-        if (!game.turning && game.moving) {
+        if (!game.turning && game.moveBlock) {
             game.turning = true;
             if (game.playerDirection.x === 1) {
                 game.player.targetFrame = 3;
@@ -349,7 +363,7 @@ States.GameState.prototype = {
         //calling the refresh function means the grid is redrawn 
         //with each keypress, after the tiles have been tweened 
         //and snapped back into place
-        if (!game.moving) {
+        if (!game.moveBlock) {
             //this is the distance to move in each direction
             var offSetY = 0;
             var offSetX = 0;
@@ -384,19 +398,19 @@ States.GameState.prototype = {
                 if (offSetX !== 0 || offSetY !== 0) {
 
                     game.playerDirection = checkedPath;
-                    game.moving = true;
+                    game.moveBlock = true;
                     //this tween slides everything in the right directions
                     var tweenMap = game.add.tween(game.map).to({
                         x: game.map.x + game.pxSize * game.zoom * offSetX,
                         y: game.map.y + game.pxSize * game.zoom * offSetY
                     }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
                     //after it updates the data object,
-                    //unsets the moving flag,
+                    //unsets the moveBlock flag,
                     //and calls refresh()
                     tweenMap.onComplete.add(function() {
                         game.offsets.x -= offSetX;
                         game.offsets.y -= offSetY;
-                        game.moving = false;
+                        game.moveBlock = false;
                         game.map.x = 0;
                         game.map.y = 0;
                         this.refresh();
@@ -404,8 +418,8 @@ States.GameState.prototype = {
 
                     //this gives it a little bounce before the refresh
                     var tweenPlayer = game.add.tween(game.player).to({
-                        x: game.player.x - game.pxSize * offSetX * game.zoom /8,
-                        y: game.player.y - game.pxSize * offSetY *game.zoom/8
+                        x: game.player.x - game.pxSize * offSetX * game.zoom / 8,
+                        y: game.player.y - game.pxSize * offSetY * game.zoom / 8
                     }, game.moveTimeout, Phaser.Easing.Bounce.Out, true);
                 }
             }

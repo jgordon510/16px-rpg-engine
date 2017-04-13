@@ -12,6 +12,9 @@ https://opengameart.org/content/tiny-16-basic
 sharm2
 https://opengameart.org/content/16x16-overworld-tiles
 
+sharm_town - modified from original by jgordon510
+https://opengameart.org/content/16x16-town-remix
+
 sharm_forest
 https://opengameart.org/content/16x16-forest-tiles
 
@@ -29,3 +32,7 @@ https://opengameart.org/content/cave-tileset-0
 
 MrBeast Desert set
 https://opengameart.org/content/desert-tileset-0
+
+Trent Gamblin
+(Submitted by qubodup)
+https://opengameart.org/content/48-animated-old-school-rpg-characters-16x16
