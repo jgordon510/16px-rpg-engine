@@ -404,9 +404,9 @@ States.GameState.prototype = {
 
                     //this gives it a little bounce before the refresh
                     var tweenPlayer = game.add.tween(game.player).to({
-                        x: game.player.x - game.pxSize * offSetX * game.zoom /6,
-                        y: game.player.y - game.pxSize * offSetY *game.zoom/6
-                    }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
+                        x: game.player.x - game.pxSize * offSetX * game.zoom /8,
+                        y: game.player.y - game.pxSize * offSetY *game.zoom/8
+                    }, game.moveTimeout, Phaser.Easing.Bounce.Out, true);
                 }
             }
         }
