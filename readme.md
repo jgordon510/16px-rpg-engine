@@ -14,5 +14,5 @@ INCOMPLETE - You'll be able to add an NPC, that will have a key to specify its d
 ## Controls
 Use the arrow keys to move around.  Scrolling your mouse will zoom the view in and out, but zooming out will slow down movement significantly.  CTRL-Left/Right will allow you to switch pages in the Structures menu. CTRL-S to save and download the file to your computer.  You can drag the file onto the editor window to load the file.
 # Game
-The game is a work in progress.  Currently navigation works, as well as passable detection.
+The game is a work in progress.  I am currently working on an introduction/tutorial.
 ![alt text](screenshot.png "Game Screenshot")
