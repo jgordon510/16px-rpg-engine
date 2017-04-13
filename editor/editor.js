@@ -613,16 +613,17 @@ States.EditorState.prototype = {
                     frame: structure.frame
                 });
             });
-            for (var x = -1; x <= right - left; x++) {
-                for (var y = -1; y <= bottom - top; y++) {
-                    if (left + x > 0 && top + y > 0) {
-                        game.mapData.passables[x + game.highlightTile.gridLocation.x][y + game.highlightTile.gridLocation.y] = game.mapData.passables[left + x][top + y].slice();
-                    }
-                    else {
-                        console.log("out of bounds!")
-                    }
-                }
-            }
+            //don't want to paste passable any more
+            // for (var x = -1; x <= right - left; x++) {
+            //     for (var y = -1; y <= bottom - top; y++) {
+            //         if (left + x > 0 && top + y > 0) {
+            //             game.mapData.passables[x + game.highlightTile.gridLocation.x][y + game.highlightTile.gridLocation.y] = game.mapData.passables[left + x][top + y].slice();
+            //         }
+            //         else {
+            //             console.log("out of bounds!")
+            //         }
+            //     }
+            // }
             game.clipboard.reverse();
             States.EditorState.prototype.refresh();
         }
