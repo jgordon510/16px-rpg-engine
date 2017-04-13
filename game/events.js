@@ -1,49 +1,120 @@
 var Events = {
-    test: function() {
-        game.playerSheet = 'baby';
-        game.mapKey = 'plaidTown';
-        console.log(game.mapKey)
-        States.GameState.prototype.reload();
-    },
-    downstairs: function() {
-        game.mapKey = 'introMaze';
-        States.GameState.prototype.reload();
-    },
-    introText1: function() {
+    introTown: function() {
         //this is currently how I'm keeping things from recurring
         //eventually these flags will be stored on the 
         //playerData object instead
-        if (!this.flags['introText1']) {
-            this.flags['introText1'] = true;
-            game.moving = true;
-            swal({
-                title: "Events",
-                text: 'This event was added with the map editor and coded in the events.js file.',
-                type: 'success'
-            }).then(function() {
-                game.moving = false;
-            });
+        switch (game.mapKey) {
+            case 'introInterior1':
+                game.mapStart = {
+                    x: 4,
+                    y: 17
+                };
+                break;
+            case 'introInterior2':
+                game.mapStart = {
+                    x: 9,
+                    y: 15
+                };
+                break;
+            case 'introInterior3':
+                game.mapStart = {
+                    x: 14,
+                    y: 17
+                };
+                break;
+            case 'introInterior4':
+                game.mapStart = {
+                    x: 19,
+                    y: 16
+                };
+                break;
+            case 'introInterior5':
+                game.mapStart = {
+                    x: 18,
+                    y: 8
+                };
+                break;
         }
-
+        game.mapKey = 'introStart';
+        States.GameState.prototype.reload();
+    },
+    introTown1: function() {
+        //this is currently how I'm keeping things from recurring
+        //eventually these flags will be stored on the 
+        //playerData object instead
+        game.mapKey = 'introInterior1';
+        game.mapStart = {
+            x: 6,
+            y: 7
+        };
+        States.GameState.prototype.reload();
+        game.player.frame = 10;
 
     },
-    introText2: function() {
-        if (!this.flags['introText2']) {
-            this.flags['introText2'] = true;
-            game.moving = true;
-            swal("Events", 'Each event has a key, which is the name of the function that is run when you touch it.', "success").then(function() {
-                game.moving = false;
-            });
-        }
+    introTown2: function() {
+        //this is currently how I'm keeping things from recurring
+        //eventually these flags will be stored on the 
+        //playerData object instead
+        game.mapKey = 'introInterior2';
+        game.mapStart = {
+            x: 10,
+            y: 7
+        };
+        States.GameState.prototype.reload();
+        game.player.frame = 10;
+
     },
-    introText3: function() {
-        if (!this.flags['introText3']) {
-            this.flags['introText3'] = true;
-            game.moving = true;
-            swal("Events", 'Events can do many things.  The stairway inside the house even loads a different map!', "success").then(function() {
-                game.moving = false;
-            });
-        }
+    introTown3: function() {
+        //this is currently how I'm keeping things from recurring
+        //eventually these flags will be stored on the 
+        //playerData object instead
+        game.mapKey = 'introInterior3';
+        game.mapStart = {
+            x: 6,
+            y: 7
+        };
+        States.GameState.prototype.reload();
+        game.player.frame = 10;
+
+    },
+    introTown4: function() {
+        //this is currently how I'm keeping things from recurring
+        //eventually these flags will be stored on the 
+        //playerData object instead
+        game.mapKey = 'introInterior4';
+        game.mapStart = {
+            x: 6,
+            y: 7
+        };
+        States.GameState.prototype.reload();
+        game.player.frame = 10;
+
+    },
+    introTown5: function() {
+        //this is currently how I'm keeping things from recurring
+        //eventually these flags will be stored on the 
+        //playerData object instead
+        game.mapKey = 'introInterior5';
+        game.mapStart = {
+            x: 6,
+            y: 7
+        };
+        States.GameState.prototype.reload();
+        game.player.frame = 10;
+
+    },
+    downstairs: function() {
+        //this is currently how I'm keeping things from recurring
+        //eventually these flags will be stored on the 
+        //playerData object instead
+        game.mapKey = 'introMaze';
+        game.mapStart = {
+            x: 2,
+            y: 2
+        };
+        States.GameState.prototype.reload();
+        
+
     },
     introTextAlt: function() {
         if (!this.flags['introTextAlt']) {
@@ -53,6 +124,10 @@ var Events = {
                 game.moving = false;
             });
         }
+    },
+    test: function() {
+       game.mapKey = 'introStart';
+        States.GameState.prototype.reload(); 
     },
     flags: {}
 };

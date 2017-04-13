@@ -60,7 +60,7 @@ States.GameState.prototype = {
             fontSize: 34
         };
         //the game's zoom factor
-        game.zoom = 4;
+        game.zoom = 3;
         game.pxSize = 16; //don't change
         //the scroll offsets
         //we want to scroll back half each dimension in tiles
@@ -73,11 +73,10 @@ States.GameState.prototype = {
             y: 0
         };
         game.mapKey = 'introStart'; //the default json file to load
-
+        game.mapStart = null; //used to override the default map start loc
         game.moveTimeout = 300;
 
         game.mapList = game.cache.getJSON('mapList');
-        console.log(game.mapList)
         game.mapList.forEach(function(key) {
             game.load.json(key, '../data/maps/' + key + '.json');
         });
@@ -132,8 +131,16 @@ States.GameState.prototype = {
         console.log(game.mapKey)
         game.mapData = game.cache.getJSON(game.mapKey);
         //adjust the offsets by the start position
-        game.offsets.x += game.mapData.start.x;
-        game.offsets.y += game.mapData.start.y;
+        if (game.mapStart === null) {
+            game.offsets.x += game.mapData.start.x;
+            game.offsets.y += game.mapData.start.y;
+        }
+        else {
+            game.offsets.x += game.mapStart.x;
+            game.offsets.y += game.mapStart.y;
+            game.mapStart = null;
+        }
+
 
         //make the grid of blank parent tiles
         this.makeGrid();
@@ -217,19 +224,15 @@ States.GameState.prototype = {
             //add the red lines for unpassableDown and Right
             //TODO check these undefined checks:
             //they might have been needed just for legacy files
-            if (typeof game.mapData.passables[tile.gridLocation.x] !== 'undefined') { //ugh!
-                if (typeof game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] !== 'undefined') { //double-ugh!
-                    if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][0]) {
-                        var blockedRight = game.add.sprite(0, 0, 'unpassableRight');
-                        tile.passableSprite.addChild(blockedRight);
-                    }
-                    if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][1]) {
-                        var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
-                        tile.passableSprite.addChild(blockedDown);
-                    }
-                }
-
+            if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][0]) {
+                var blockedRight = game.add.sprite(0, 0, 'unpassableRight');
+                tile.passableSprite.addChild(blockedRight);
             }
+            if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][1]) {
+                var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
+                tile.passableSprite.addChild(blockedDown);
+            }
+            
         });
     },
     renderStructures: function() {
@@ -401,8 +404,8 @@ States.GameState.prototype = {
 
                     //this gives it a little bounce before the refresh
                     var tweenPlayer = game.add.tween(game.player).to({
-                        x: game.player.x - game.pxSize * offSetX / 2,
-                        y: game.player.y - game.pxSize * offSetY / 2
+                        x: game.player.x - game.pxSize * offSetX * game.zoom /6,
+                        y: game.player.y - game.pxSize * offSetY *game.zoom/6
                     }, game.moveTimeout, Phaser.Easing.Linear.Out, true);
                 }
             }
@@ -417,25 +420,25 @@ States.GameState.prototype = {
         //TODO deal with map edges also
         if (offSetX > 0) { //left
             //check index 0 of the one to the left
-            if (game.mapData.passables[game.map.centerTile.gridLocation.x - 1][game.map.centerTile.gridLocation.y][0]) {
+            if (game.mapData.passables[game.map.centerTile.gridLocation.y][game.map.centerTile.gridLocation.x - 1][0]) {
                 offSetX = 0;
             }
         }
         else if (offSetX < 0) { //right
             //check index 0 of the current tile
-            if (game.mapData.passables[game.map.centerTile.gridLocation.x][game.map.centerTile.gridLocation.y][0]) {
+            if (game.mapData.passables[game.map.centerTile.gridLocation.y][game.map.centerTile.gridLocation.x][0]) {
                 offSetX = 0;
             }
         }
         else if (offSetY < 0) { //down
             //check index 1 of the current tile
-            if (game.mapData.passables[game.map.centerTile.gridLocation.x][game.map.centerTile.gridLocation.y][1]) {
+            if (game.mapData.passables[game.map.centerTile.gridLocation.y][game.map.centerTile.gridLocation.x][1]) {
                 offSetY = 0;
             }
         }
         else if (offSetY > 0) { //up
             //check index 1 of the one above
-            if (game.mapData.passables[game.map.centerTile.gridLocation.x][game.map.centerTile.gridLocation.y - 1][1]) {
+            if (game.mapData.passables[game.map.centerTile.gridLocation.y - 1][game.map.centerTile.gridLocation.x][1]) {
                 offSetY = 0;
             }
         }

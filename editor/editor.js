@@ -374,20 +374,20 @@ States.EditorState.prototype = {
             //add the red lines for unpassableDown and Right
             //TODO check these undefined checks:
             //they might have been needed just for legacy files
-            if (typeof game.mapData.passables[tile.gridLocation.x] !== 'undefined') { //ugh!
-                if (typeof game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] !== 'undefined') { //double-ugh!
-                    if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] !== null) {
-                        if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][0]) {
+            if (typeof game.mapData.passables[tile.gridLocation.y] !== 'undefined') { //ugh!
+                if (typeof game.mapData.passables[tile.gridLocation.y][tile.gridLocation.x] !== 'undefined') { //double-ugh!
+                    if (game.mapData.passables[tile.gridLocation.y][tile.gridLocation.x] !== null) {
+                        if (game.mapData.passables[tile.gridLocation.y][tile.gridLocation.x][0]) {
                             var blockedRight = game.add.sprite(0, 0, 'unpassableRight');
                             tile.passableSprite.addChild(blockedRight);
                         }
-                        if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][1]) {
+                        if (game.mapData.passables[tile.gridLocation.y][tile.gridLocation.x][1]) {
                             var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
                             tile.passableSprite.addChild(blockedDown);
                         }
                     }
                     else {
-                        game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y] = [0, 0]
+                        game.mapData.passables[tile.gridLocation.y][tile.gridLocation.x] = [0, 0]
                     }
 
                 }
@@ -547,7 +547,7 @@ States.EditorState.prototype = {
         {
             game.mapData.start.x = game.offsets.x;
             game.mapData.start.y = game.offsets.y;
-            swal("Map startpoint set!", game.mapData.start.x + ',' + game.mapData.start.y , "success")
+            swal("Map startpoint set!", game.mapData.start.x + ',' + game.mapData.start.y, "success")
         }
     },
     render: function() {
@@ -638,7 +638,8 @@ game.state.add('EditorState', States.EditorState);
 function setTiles(tile) {
     switch (game.mode) {
         case 'P': //passables
-            var passable = game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y];
+
+            var passable = game.mapData.passables[tile.gridLocation.y][tile.gridLocation.x];
             if (game.currentTexture === 'passable') { //clear both flags
                 passable[0] = 0;
                 passable[1] = 0;
@@ -649,6 +650,8 @@ function setTiles(tile) {
             else if (game.currentTexture === 'unpassableDown') {
                 passable[1] = 1; //flag down
             }
+
+
             break;
         case 'S':
             //an object representing the current structure
@@ -679,9 +682,8 @@ function setTiles(tile) {
                     var key = prompt("Enter the event key: ");
                 }
 
-                if(typeof key === 'undefined')
-                {
-                    var key = game.mapData.events[game.mapData.events.length-1].key;
+                if (typeof key === 'undefined') {
+                    var key = game.mapData.events[game.mapData.events.length - 1].key;
                 }
                 var event = {
                     key: key,
