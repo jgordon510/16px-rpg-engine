@@ -1,0 +1,58 @@
+ {
+     "startKey": "meet",
+     "meet": {
+         "text": ["Hi, I'm Dan", "Nice to meet you."],
+         "key": "talk",
+         "question": null,
+         "event": null
+     },
+     "talk": {
+         "text": ["I love Springtime.", "It's my favorite season!"],
+         "key": null,
+         "question": "season",
+         "flags": [],
+         "event": null
+     },
+     "questions": {
+         "season": {
+             "text": ["What's your favorite season?", "Answer honestly."],
+             "options": ["Winter", "Spring", "Summer", "Fall"],
+             "keys": ["winter", "spring", "summer", "fall"],
+             "event": null
+         }
+     },
+     "winter": {
+         "text": ["It's too cold for me!"],
+         "key": "bye",
+         "question": null,
+         "flags": [],
+         "event": null
+     },
+     "spring": {
+         "text": ["It's perfect! You agree!"],
+         "key": "bye",
+         "question": null,
+         "flags": ["Events['introTown1']()"],
+         "event": null
+     },
+     "summer": {
+         "text": ["It's too hot for me!"],
+         "key": "bye",
+         "question": null,
+         "flags": [],
+         "event": null
+     },
+     "fall": {
+         "text": ["It rains too much!"],
+         "key": "bye",
+         "question": null,
+         "flags": [],
+         "event": null
+     },
+
+     "bye": {
+         "text": ["It was nice to see you.", "Stop by again."],
+         "key": "talk"
+     }
+ }
+ 

@@ -19,7 +19,7 @@ States.LoadFonts.prototype = {
         game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
         game.load.json('textures', '../data/textures.json'); //this describes the 16px tile textures
         game.load.json('mapList', '../data/mapList.json');
-        game.load.json('dialog', '../data/dialog.json');
+        game.load.json('dialogList', '../data/dialogList.json');
         game.time.advancedTiming = true; //used to check the fps in the render function
     },
     create: function() {
@@ -81,14 +81,19 @@ States.GameState.prototype = {
         game.mapList.forEach(function(key) {
             game.load.json(key, '../data/maps/' + key + '.json');
         });
-
+        game.dialog = {};
+        game.dialogList = game.cache.getJSON('dialogList');
+        game.dialogList.forEach(function(key) {
+            game.dialog[key] = game.load.json('dialog-'+key, '../data/dialog/' + key + '.json');
+        });
+        
 
 
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
         //Load all textures described in the textures.json file
-        game.dialog = game.cache.getJSON('dialog');
+
         game.textures = game.cache.getJSON('textures');
         for (var key in game.textures) {
             if (game.textures.hasOwnProperty(key)) {
@@ -115,6 +120,7 @@ States.GameState.prototype = {
     reload: function() {
         game.map.destroy();
         game.structureGroup.destroy();
+        game.menu.close(true)
         game.offsets = {
             x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
             y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
@@ -122,6 +128,9 @@ States.GameState.prototype = {
         this.create();
     },
     create: function() {
+        game.dialogList.forEach(function(character) {
+            game.dialog[character] = game.cache.getJSON('dialog-'+character);
+        });
         //a set of cursor keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
         //a group to hold the blank map tiles that parent everything
@@ -423,8 +432,8 @@ States.GameState.prototype = {
                     }, game.moveTimeout, Phaser.Easing.Bounce.Out, true);
                 }
             }
-        } else
-        {
+        }
+        else {
             game.menu.update();
         }
     },

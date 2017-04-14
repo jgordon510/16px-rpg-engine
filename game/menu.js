@@ -21,6 +21,8 @@ var Menu = {
         return this;
     },
     new: function(settings) {
+        this.group.destroy();
+        this.group = game.add.group();
         //called when a new window is required
         this.panel = game.add.sprite(0, 0, this.rectangleTexture(settings.w, settings.h));
         this.group.add(this.panel);
@@ -37,13 +39,14 @@ var Menu = {
         this.group.add(this.infoText);
     },
     dialog: function(settings) {
-        settings.dialog.met = true;
+        console.log(settings.dialog.startKey)
         this.dialogText = game.add.text(20, 20, '', this.style);
         this.group.add(this.dialogText);
         this.typeText(this.dialogText, settings.dialog[settings.dialog.startKey].text, 0, nextTalk);
+        this.flags = [];
 
         function nextTalk() {
-            console.log("nextTalk: ", settings.dialog.startKey)
+            Menu.flags = Menu.flags.concat(settings.dialog[settings.dialog.startKey].flags)
             var question = settings.dialog[settings.dialog.startKey].question;
             settings.dialog.startKey = settings.dialog[settings.dialog.startKey].key
 
@@ -55,13 +58,18 @@ var Menu = {
                     settings.dialog.startKey = settings.dialog['bye'].key;
                     Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 1) + '*');
                     Menu.spaceBar.onDown.addOnce(goodbye);
+
                     function goodbye() {
                         Menu.close(true);
+
+                        Menu.flags.forEach(function(flag) {
+                            console.log("evaluating flag: ", flag)
+                            eval(flag)
+                        });
+
+
                     }
                 }
-
-
-
             }
             else if (settings.dialog.startKey !== null) {
                 Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 1))
@@ -92,7 +100,6 @@ var Menu = {
                         Menu.spaceBar.onDown.addOnce(selectItem);
 
                         function selectItem() {
-                            console.log(Menu.optionSelected)
                             settings.dialog[settings.dialog.startKey] = {
                                 key: Menu.optionArray[Menu.optionSelected].optionKey
                             };
@@ -109,20 +116,21 @@ var Menu = {
                 }, 500);
 
             }
+
+
+
         }
 
     },
     moveCaret: function(key) {
         if (!Menu.caretMoving) {
             Menu.caretMoving = true;
-            console.log(Menu.optionSelected)
             while (Menu.optionSelected >= Menu.optionArray.length) {
                 Menu.optionSelected -= Menu.optionArray.length
             }
             while (Menu.optionSelected < 0) {
                 Menu.optionSelected += Menu.optionArray.length
             }
-            console.log(Menu.optionSelected)
             Menu.optionCaret.x = Menu.optionArray[Menu.optionSelected].x - Menu.optionCaret.width - 5;
             Menu.optionCaret.y = Menu.optionArray[Menu.optionSelected].y;
             setTimeout(function() {
@@ -136,16 +144,17 @@ var Menu = {
     },
     close: function(unBlock) {
         //this clears the group
+        if (unBlock) {
+            game.moveBlock = false;
+        }
         Menu.group.removeAll();
     },
     typeText: function(sprite, text, startIndex, callback) { //needs a settings object
-        console.log(text)
         game.moveBlock = true;
         var characterIndex = 0;
         addChar();
 
         function addChar() {
-            console.log("adding")
             sprite.setText(sprite.text + text[startIndex][characterIndex]);
             characterIndex++;
             if (characterIndex < text[startIndex].length) {
