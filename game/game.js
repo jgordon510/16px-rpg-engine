@@ -19,6 +19,7 @@ States.LoadFonts.prototype = {
         game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
         game.load.json('textures', '../data/textures.json'); //this describes the 16px tile textures
         game.load.json('mapList', '../data/mapList.json');
+        game.load.json('dialog', '../data/dialog.json');
         game.time.advancedTiming = true; //used to check the fps in the render function
     },
     create: function() {
@@ -87,6 +88,7 @@ States.GameState.prototype = {
         //this gives similar results to phaser's tilemap scaling
         Phaser.scaleModes.DEFAULT = 1;
         //Load all textures described in the textures.json file
+        game.dialog = game.cache.getJSON('dialog');
         game.textures = game.cache.getJSON('textures');
         for (var key in game.textures) {
             if (game.textures.hasOwnProperty(key)) {
@@ -151,8 +153,6 @@ States.GameState.prototype = {
         //add the structures to the grid
         this.renderStructures();
 
-        //TODO add events to the grid
-        // this.renderEvents();
         //TODO add NPCs to the grid
         // this.renderNPCS();
         this.renderPlayer();
@@ -423,6 +423,9 @@ States.GameState.prototype = {
                     }, game.moveTimeout, Phaser.Easing.Bounce.Out, true);
                 }
             }
+        } else
+        {
+            game.menu.update();
         }
     },
     checkPath: function(proposed) {
