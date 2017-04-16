@@ -1,0 +1,7 @@
+K/J     
+D=A=SPACE Brings up a menu with a number of actions you can take at any given time. Mainly these are "Talk" and "Check", but there are a number of others such as "Goods" and "PSI". A Button also works as the "confirm" command in these menu screens.
+S=B Acts as the "cancel" or "no" button. Pressing this button will also bring up the status of your party.
+A=Y //unused  
+W=X Acts as an instant "Check" or "Talk" so you don't have to go through the menu. Also functions as confirm.
+Q=L //unused
+E=R //unused

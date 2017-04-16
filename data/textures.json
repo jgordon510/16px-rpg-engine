@@ -97,5 +97,8 @@
         "key": "delete",
         "type":"image"
     }],
-    "npcs": []
+    "npcs": [{
+        "key": "player_gator",
+        "type": "sheet"
+    }]
 }

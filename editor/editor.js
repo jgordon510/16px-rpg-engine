@@ -467,6 +467,17 @@ States.EditorState.prototype = {
         });
     },
     renderNPCS: function() {
+        game.prompedForNPCKey = false;
+        game.mapData.npcs.forEach(function(npc) {
+            game.map.forEach(function(tile) {
+                if (npc.x == tile.gridLocation.x && npc.y == tile.gridLocation.y) {
+                    tile.npcSprite = game.add.sprite(0, 0, npc.key);
+                    tile.addChild(tile.npcSprite); //add to the blank grid 
+                }
+            });
+
+        });
+
         //todo
     },
     update: function() {
@@ -480,6 +491,7 @@ States.EditorState.prototype = {
         this.renderPassables();
         this.renderStructures();
         this.renderEvents();
+        this.renderNPCS();
     },
     scrollView: function() {
         //this function is called by update and scrolls the view
@@ -680,26 +692,31 @@ function setTiles(tile) {
             {
                 if (!game.prompedForEventKey) {
                     game.prompedForEventKey = true;
-                    var key = prompt("Enter the event key: ");
+                    var nameKey = prompt("Enter the event key: ");
                 }
 
-                if (typeof key === 'undefined') {
-                    var key = game.mapData.events[game.mapData.events.length - 1].key;
+                if (typeof nameKey === 'undefined') {
+                    var nameKey = game.mapData.events[game.mapData.events.length - 1].key;
                 }
                 var event = {
-                    key: key,
+                    key: nameKey,
                     x: tile.gridLocation.x,
                     y: tile.gridLocation.y
                 };
                 //if I already have an event here, I don't need two
+                var found = false;
                 game.mapData.events.forEach(function(existingEvent, index) {
                     //this function is below and compares two object for sameness
                     if (existingEvent.x === tile.gridLocation.x && existingEvent.y === tile.gridLocation.y) {
-                        game.mapData.event.splice(index, 1);
+                        console.log("already there!")
+                        found = true;
                     }
                 });
                 //set the data
-                game.mapData.events.push(event);
+                if (!found) {
+                    game.mapData.events.push(event);
+                }
+
             }
             else if (game.textureColumn == 1) {
                 game.mapData.structures.forEach(function(existingStructure, index) {
@@ -720,6 +737,34 @@ function setTiles(tile) {
             }
 
 
+            break;
+        case 'N':
+            if (!game.prompedForNPCKey) {
+                game.prompedForNPCKey = true;
+                var nameKey = prompt("Enter the npc key: ");
+            }
+
+            if (typeof nameKey === 'undefined') {
+                var nameKey = game.mapData.npcs[game.mapData.npcs.length - 1].key;
+            }
+            var npc = {
+                nameKey: nameKey,
+                key: game.currentTexture,
+                x: tile.gridLocation.x,
+                y: tile.gridLocation.y
+            };
+            //if I already have an npc here, I don't need two
+            var found = false;
+            // game.mapData.npcs.forEach(function(existingNPC, index) {
+            //     //this function is below and compares two object for sameness
+            //     if (existingNPC.x === tile.gridLocation.x && existingNPC.y === tile.gridLocation.y) {
+            //         found = true;
+            //     }
+            // });
+            //set the data
+            if (!found) {
+                game.mapData.npcs.push(npc);
+            }
             break;
         default:
             console.log("unspecified mode!");

@@ -42,6 +42,13 @@ var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '
 States.GameState = function() {};
 States.GameState.prototype = {
     preload: function() {
+        game.input.gamepad.start();
+        game.pad = game.input.gamepad.pad1;
+
+
+
+
+
         //the saveCPU plugin reduces the idle CPU usage
         //https://github.com/photonstorm/phaser-plugins/tree/master/SaveCPU
         this.game.plugins.add(Phaser.Plugin.SaveCPU);
@@ -84,9 +91,9 @@ States.GameState.prototype = {
         game.dialog = {};
         game.dialogList = game.cache.getJSON('dialogList');
         game.dialogList.forEach(function(key) {
-            game.dialog[key] = game.load.json('dialog-'+key, '../data/dialog/' + key + '.json');
+            game.dialog[key] = game.load.json('dialog-' + key, '../data/dialog/' + key + '.json');
         });
-        
+
 
 
         //this removes any dithering from scaling
@@ -120,7 +127,11 @@ States.GameState.prototype = {
     reload: function() {
         game.map.destroy();
         game.structureGroup.destroy();
-        game.menu.close(true)
+        game.infoPanel.close(true);
+        game.dialogPanel.close(true);
+        game.selectionPanel.close(true);
+        game.optionsPanel.close(true);
+        game.walkPanel.close(true);
         game.offsets = {
             x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
             y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
@@ -129,10 +140,15 @@ States.GameState.prototype = {
     },
     create: function() {
         game.dialogList.forEach(function(character) {
-            game.dialog[character] = game.cache.getJSON('dialog-'+character);
+            game.dialog[character] = game.cache.getJSON('dialog-' + character);
         });
         //a set of cursor keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
+        game.spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+
+        // To listen to buttons from a specific pad listen directly on that pad game.input.gamepad.padX, where X = pad 1-4
+
+
         //a group to hold the blank map tiles that parent everything
         //add a key for saving
         game.map = game.add.group();
@@ -140,7 +156,6 @@ States.GameState.prototype = {
         game.structureGroup = game.add.group();
         //an object containing the default mapData
 
-        console.log(game.mapKey)
         game.mapData = game.cache.getJSON(game.mapKey);
         //adjust the offsets by the start position
         if (game.mapStart === null) {
@@ -163,13 +178,17 @@ States.GameState.prototype = {
         this.renderStructures();
 
         //TODO add NPCs to the grid
-        // this.renderNPCS();
+        this.renderNPCS();
         this.renderPlayer();
-        game.menu = Menu.create();
+        game.infoPanel = Menu.create();
+        game.dialogPanel = Menu.create();
+        game.selectionPanel = Menu.create();
+        game.optionsPanel = Menu.create();
+        game.walkPanel = Menu.create();
         //swal("Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!', "success")
         if (!game.displayedWelcome) {
             game.displayedWelcome = true;
-            game.menu.new({
+            game.infoPanel.new({
                 w: game.width * .5,
                 h: game.width * .2,
                 x: game.width * .25,
@@ -302,21 +321,70 @@ States.GameState.prototype = {
         game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'player_' + game.playerSheet);
         game.player.frame = game.oldPlayerFrame;
         game.player.scale.setTo(game.zoom);
+        game.player.gridLocation = {
+            x: game.map.centerTile.gridLocation.x,
+            y: game.map.centerTile.gridLocation.y
+        };
     },
     renderEvents: function() {
         //todo
     },
     renderNPCS: function() {
-        //todo
+        game.mapData.npcs.forEach(function(npc) {
+            var offSetX = 0;
+            var offSetY = 0;
+            if (Math.random() > 0.8) {
+                npc.direction = Math.floor(Math.random() * 4);
+                switch (npc.direction) {
+                    case (0): //down
+                        offSetY--;
+                        break;
+                    case (1): //right
+                        offSetX++;
+                        break;
+                    case (2): //left
+                        offSetX--;
+                        break;
+                    case (3): //up
+                        offSetY++;
+                        break;
+                }
+            }
+            var proposed = {
+                x: offSetX,
+                y: offSetY
+            };
+
+            var checkedPath = States.GameState.prototype.checkPath(npc, proposed);
+            npc.x -= checkedPath.x;
+            npc.y -= checkedPath.y;
+            game.map.forEach(function(tile) {
+                if (!npc.moved && npc.x == tile.gridLocation.x && npc.y == tile.gridLocation.y) {
+                    npc.moved = true;
+                    tile.npcSprite = game.add.sprite(0, 0, npc.key);
+                    tile.npcSprite.frame = npc.frame;
+                    tile.npcSprite.nameKey = npc.nameKey;
+
+                    tile.npcSprite.gridLocation = {
+                        x: npc.x,
+                        y: npc.y
+                    };
+                    tile.addChild(tile.npcSprite); //add to the blank grid 
+                }
+            });
+
+        });
+        game.mapData.npcs.forEach(function(npc) {
+            npc.moved = false;
+        });
     },
     update: function() {
         //this scans the keyboard for cursor presses
         this.scrollView();
         this.animatePlayer();
-
     },
     animatePlayer: function() {
-        if (!game.turning && game.moveBlock) {
+        if (!game.turning && game.moveBlock && !game.menuOpen) {
             game.turning = true;
             if (game.playerDirection.x === 1) {
                 game.player.targetFrame = 3;
@@ -342,17 +410,35 @@ States.GameState.prototype = {
             game.oldPlayerFrame = game.player.frame;
             setTimeout(function() {
                 game.turning = false;
+                States.GameState.prototype.animateNPCS();
             }, game.moveTimeout / 3);
 
         }
 
+
+    },
+    animateNPCS: function() {
+        game.mapData.npcs.forEach(function(npc) {
+            var targetFrame = npc.direction * 3;
+            if (typeof npc.frameOffset === 'undefined') {
+                npc.frameOffset = 0;
+            }
+            npc.frame = targetFrame + npc.frameOffset % 3;
+            npc.frameOffset++;
+            npc.frame = npc.frame % 12;
+            game.map.forEach(function(tile) {
+                if (typeof tile.npcSprite !== 'undefined') {
+                    if (tile.npcSprite.gridLocation.x === npc.x && tile.npcSprite.gridLocation.y === npc.y) {
+                        tile.npcSprite.frame = npc.frame;
+                    }
+                }
+            });
+        });
     },
     checkEvents: function() {
         game.mapData.events.forEach(function(event) {
-            if (event.x === game.map.centerTile.gridLocation.x) {
-                if (event.y === game.map.centerTile.gridLocation.y) {
-                    console.log("touching event:", event.key)
-                    console.log(event.key)
+            if (event.x === game.player.gridLocation.x) {
+                if (event.y === game.player.gridLocation.y) {
                     Events[event.key]();
                 }
             }
@@ -361,9 +447,12 @@ States.GameState.prototype = {
     refresh: function() {
         //this function refreshes the entire grid
         //it redraws everything
+        console.log("refreshing")
+
         this.makeGrid();
         //this.renderPassables()
         this.renderStructures();
+        this.renderNPCS();
         this.renderPlayer();
         States.GameState.prototype.checkEvents();
     },
@@ -372,11 +461,20 @@ States.GameState.prototype = {
         //calling the refresh function means the grid is redrawn 
         //with each keypress, after the tiles have been tweened 
         //and snapped back into place
-        if (!game.moveBlock) {
+        if (!game.moveBlock && !game.menuOpen) {
             //this is the distance to move in each direction
             var offSetY = 0;
             var offSetX = 0;
             //set the offset for each direction
+            if (typeof game.pad._rawPad !== 'undefined') {
+                //prevent diagonals
+                if (Math.abs(game.pad._rawPad.axes[6]) > 0) {
+                    offSetX -= game.pad._rawPad.axes[6];
+                }
+                else {
+                    offSetY -= game.pad._rawPad.axes[7];
+                }
+            }
             if (game.cursors.up.isDown) {
                 offSetY = 1;
             }
@@ -390,6 +488,9 @@ States.GameState.prototype = {
                 offSetX = -1;
 
             }
+            else if (game.spaceBar.isDown || (typeof game.pad._rawPad !== 'undefined' && game.pad._rawPad.buttons[0].pressed)) { //a button
+                Menu.openWalkMenu();
+            }
 
             if (offSetX !== 0 || offSetY !== 0) {
                 var proposed = {
@@ -399,13 +500,13 @@ States.GameState.prototype = {
 
                 //checkPath returns an object with new offsets
                 //it will set the offset to 0 if it's blocked
-                var checkedPath = this.checkPath(proposed);
+
+                var checkedPath = this.checkPath(game.player.gridLocation, proposed);
 
                 offSetX = checkedPath.x;
                 offSetY = checkedPath.y;
                 //offSet X/Y is now set to 0 if it's blocked
                 if (offSetX !== 0 || offSetY !== 0) {
-
                     game.playerDirection = checkedPath;
                     game.moveBlock = true;
                     //this tween slides everything in the right directions
@@ -420,6 +521,8 @@ States.GameState.prototype = {
                         game.offsets.x -= offSetX;
                         game.offsets.y -= offSetY;
                         game.moveBlock = false;
+
+
                         game.map.x = 0;
                         game.map.y = 0;
                         this.refresh();
@@ -433,38 +536,76 @@ States.GameState.prototype = {
                 }
             }
         }
-        else {
-            game.menu.update();
+        else if (game.menuOpen) {
+            game.infoPanel.update();
+            game.dialogPanel.update();
+            game.selectionPanel.update();
+            game.optionsPanel.update();
+            game.walkPanel.update();
         }
     },
-    checkPath: function(proposed) {
+    checkPath: function(gridLocation, proposed) {
         var offSetX = proposed.x;
         var offSetY = proposed.y;
         //this function checks the proposed path and returns
         //an object containing the original offsets if it's clear
         //but sets the offset to 0 if it's blocked.
-        //TODO deal with map edges also
+        //TODO reduce to a function
+
         if (offSetX > 0) { //left
+
             //check index 0 of the one to the left
-            if (game.mapData.passables[game.map.centerTile.gridLocation.y][game.map.centerTile.gridLocation.x - 1][0]) {
+            if (game.mapData.passables[gridLocation.y][gridLocation.x - 1][0]) {
                 offSetX = 0;
             }
+            if (game.player.gridLocation.x == gridLocation.x - 1 && game.player.gridLocation.y == gridLocation.y) {
+                offSetX = 0;
+            }
+            game.mapData.npcs.forEach(function(npc) {
+                if (npc.x == gridLocation.x - 1 && npc.y == gridLocation.y) {
+                    offSetX = 0;
+                }
+            });
         }
         else if (offSetX < 0) { //right
             //check index 0 of the current tile
-            if (game.mapData.passables[game.map.centerTile.gridLocation.y][game.map.centerTile.gridLocation.x][0]) {
+            if (game.mapData.passables[gridLocation.y][gridLocation.x][0]) {
+                offSetX = 0;
+            }
+            game.mapData.npcs.forEach(function(npc) {
+                if (npc.x == gridLocation.x + 1 && npc.y == gridLocation.y) {
+                    offSetX = 0;
+                }
+            });
+            if (game.player.gridLocation.x == gridLocation.x + 1 && game.player.gridLocation.y == gridLocation.y) {
                 offSetX = 0;
             }
         }
         else if (offSetY < 0) { //down
             //check index 1 of the current tile
-            if (game.mapData.passables[game.map.centerTile.gridLocation.y][game.map.centerTile.gridLocation.x][1]) {
+            if (game.mapData.passables[gridLocation.y][gridLocation.x][1]) {
+                offSetY = 0;
+            }
+            game.mapData.npcs.forEach(function(npc) {
+                if (npc.x == gridLocation.x && npc.y == gridLocation.y + 1) {
+                    offSetY = 0;
+                }
+            });
+            if (game.player.gridLocation.x == gridLocation.x && game.player.gridLocation.y == gridLocation.y + 1) {
                 offSetY = 0;
             }
         }
         else if (offSetY > 0) { //up
             //check index 1 of the one above
-            if (game.mapData.passables[game.map.centerTile.gridLocation.y - 1][game.map.centerTile.gridLocation.x][1]) {
+            if (game.mapData.passables[gridLocation.y - 1][gridLocation.x][1]) {
+                offSetY = 0;
+            }
+            game.mapData.npcs.forEach(function(npc) {
+                if (npc.x == gridLocation.x && npc.y == gridLocation.y - 1) {
+                    offSetY = 0;
+                }
+            });
+            if (game.player.gridLocation.x == gridLocation.x && game.player.gridLocation.y == gridLocation.y + 1) {
                 offSetY = 0;
             }
         }
