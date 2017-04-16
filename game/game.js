@@ -42,6 +42,10 @@ var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '
 States.GameState = function() {};
 States.GameState.prototype = {
     preload: function() {
+        //temporary playerData object
+        game.playerData = {
+            gold: 100
+        };
         game.input.gamepad.start();
         game.pad = game.input.gamepad.pad1;
         //the saveCPU plugin reduces the idle CPU usage
@@ -125,7 +129,7 @@ States.GameState.prototype = {
         addFileDropper();
     },
     reload: function() {
-        game.map.destroy();  
+        game.map.destroy();
         game.structureGroup.destroy();
         //close all the menus
         game.infoPanel.close(true);
@@ -142,16 +146,17 @@ States.GameState.prototype = {
         this.create();
     },
     create: function() {
+        game.stage.backgroundColor = '#111111'
         //load the dialog
         game.dialogList.forEach(function(character) {
             game.dialog[character] = game.cache.getJSON('dialog-' + character);
         });
-        
+
         //a set keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
         game.spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
-   
+
         //a group to hold the blank map tiles that parent everything
         //add a key for saving
         game.map = game.add.group();
@@ -175,12 +180,7 @@ States.GameState.prototype = {
         //make the grid of blank parent tiles
         this.makeGrid();
         //add the blank gray squares and passable lines to the grid
-        //add the structures to the grid
-        this.renderStructures();
-        //renderNPCS also handles movement
-        this.renderNPCS();
-        //render the player sprite
-        this.renderPlayer();
+        Render.all();
         //make all the menus
         game.infoPanel = Menu.create();
         game.dialogPanel = Menu.create();
@@ -191,10 +191,10 @@ States.GameState.prototype = {
         if (!game.displayedWelcome) {
             game.displayedWelcome = true;
             game.infoPanel.new({
-                w: game.width * .5,
-                h: game.width * .2,
-                x: game.width * .25,
-                y: 100,
+                w: 400,
+                h: 200,
+                x: game.width / 2 - 200,
+                y: 50,
                 type: 'infoPanel',
                 text: ["Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!']
             });
@@ -251,212 +251,10 @@ States.GameState.prototype = {
             }
         }
     },
-    renderPassables: function() { //todo delete?  change?
-        //This function adds the passables sprite layer.  They are
-        //children of the game.map blank tiles.
-        //go through the blank tiles looking at their location on the passables grid
-        game.map.forEach(function(tile) {
-            //destroy any old passable sprite
-            if (typeof tile.passableSprite !== 'undefined') {
-                console.log("This thing is preventable probably by refreshing prior to this.");
-                tile.passableSprite.destroy();
-            }
-            //each tile has the basic gray box
-            tile.passableSprite = game.add.sprite(0, 0, 'passable');
-
-            tile.addChild(tile.passableSprite); //add to the blank grid
-            //add the red lines for unpassableDown and Right
-            //TODO check these undefined checks:
-            //they might have been needed just for legacy files
-            if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][0]) {
-                var blockedRight = game.add.sprite(0, 0, 'unpassableRight');
-                tile.passableSprite.addChild(blockedRight);
-            }
-            if (game.mapData.passables[tile.gridLocation.x][tile.gridLocation.y][1]) {
-                var blockedDown = game.add.sprite(0, 0, 'unpassableDown');
-                tile.passableSprite.addChild(blockedDown);
-            }
-
-        });
-    },
-    renderStructures: function() {
-        //This function adds the structures sprite layer.  They are
-        //children of the game.map blank tiles.
-        //this array allows for manipulation of the structure
-        //using a separate group would mess up scaling, etc.
-
-        game.structureArray = [];
-        //go through the existing blank tiles
-        game.map.forEach(function(tile) {
-            //delete all of the existing structure tiles
-            if (typeof tile.structureSpriteArray !== 'undefined') {
-                tile.structureSpriteArray.forEach(function(structure) {
-                    structure.destroy();
-                });
-            }
-            //create an array for the purposes of deleting, attached to the tile itself
-            tile.structureSpriteArray = [];
-            //go through all of the structures to find ones that match my location
-            game.mapData.structures.forEach(function(structure) {
-                if (structure.x == tile.gridLocation.x && structure.y == tile.gridLocation.y) {
-                    //add the sprite as a child to the blank tile, reflecting the texture and frame
-                    var structSprite = game.add.sprite(-1, -1, structure.key);
-                    structSprite.frame = structure.frame;
-                    tile.addChild(structSprite);
-                    //two stacks:
-                    //the game stack allows for public manipulation of all structures
-                    game.structureArray.push(structSprite);
-                    //the tile's stack, allows deleting of the tile on redraw
-                    tile.structureSpriteArray.push(structSprite);
-                }
-            });
-        });
-    },
-    renderPlayer: function() {
-        //get rid of the old player
-        if (typeof game.player !== 'undefined') {
-            game.player.destroy();
-        }
-        else {
-            //it's a new player, so the oldPlayerFrame must be set
-            game.oldPlayerFrame = 0;
-        }
-        //add player to middle tile
-        game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'player_' + game.playerSheet);
-        //set the frame to the saved one
-        game.player.frame = game.oldPlayerFrame;
-        //zoom
-        game.player.scale.setTo(game.zoom);
-        //map location
-        game.player.gridLocation = {
-            x: game.map.centerTile.gridLocation.x,
-            y: game.map.centerTile.gridLocation.y
-        };
-    },
-    renderNPCS: function() {
-        //go through the npcs
-        game.mapData.npcs.forEach(function(npc) {
-            //handle movement
-            var offSetX = 0;
-            var offSetY = 0;
-            if (Math.random() > 0.8) { //1 in 5 chance to move
-                npc.direction = Math.floor(Math.random() * 4);
-                switch (npc.direction) {
-                    case (0): //down
-                        offSetY--;
-                        break;
-                    case (1): //right
-                        offSetX++;
-                        break;
-                    case (2): //left
-                        offSetX--;
-                        break;
-                    case (3): //up
-                        offSetY++;
-                        break;
-                }
-            }
-            var proposed = {
-                x: offSetX,
-                y: offSetY
-            };
-            //check the path for obstacles
-            var checkedPath = States.GameState.prototype.checkPath(npc, proposed);
-            npc.x -= checkedPath.x;
-            npc.y -= checkedPath.y;
-            //find the right tile and add the npc sprite to it
-            game.map.forEach(function(tile) {
-                if ( npc.x == tile.gridLocation.x && npc.y == tile.gridLocation.y) {
-                    tile.npcSprite = game.add.sprite(0, 0, npc.key);
-                    tile.npcSprite.frame = npc.frame;
-                    tile.npcSprite.nameKey = npc.nameKey;
-
-                    tile.npcSprite.gridLocation = {
-                        x: npc.x,
-                        y: npc.y
-                    };
-                    tile.addChild(tile.npcSprite); //add to the blank grid 
-                }
-            });
-
-        });
-        
-    },
     update: function() {
         //this scans the keyboard for cursor presses
         this.scrollView();
-        this.animatePlayer();
-    },
-    animatePlayer: function() {
-        //this happens 3 times during the moveBlock
-        //game.turning is set to false 3 times by the timeout
-        //the setTimeout also runs the npc's movement
-        if (!game.turning && game.moveBlock && !game.menuOpen) {
-            game.turning = true;
-            if (game.playerDirection.x === 1) {
-                game.player.targetFrame = 3;
-            }
-            else if (game.playerDirection.x === -1) {
-                game.player.targetFrame = 6;
-            }
-            else if (game.playerDirection.y === 1) {
-                game.player.targetFrame = 9;
-            }
-            else if (game.playerDirection.y === -1) {
-                game.player.targetFrame = 0;
-            }
-            
-            //set the frame
-            game.player.frame = game.oldPlayerFrame;
-            if (typeof game.player.frame === 'undefined') {
-                game.player.frame = 0;
-                game.playerFrameOffset = 0;
-            }
-            game.player.frame = game.player.targetFrame + game.playerFrameOffset % 3;
-            game.playerFrameOffset++; //0,1,2
-            game.player.frame = game.player.frame % 12; //12 frames total
-            game.oldPlayerFrame = game.player.frame;
-            setTimeout(function() {
-                //reruns this funtion
-                game.turning = false;
-                //run the NPC animation each time too
-                States.GameState.prototype.animateNPCS();
-            }, game.moveTimeout / 3);
-        }
-    },
-    animateNPCS: function() {
-        //this is run by the setTimeout of the animatePlayer function
-        //3 times
-        game.mapData.npcs.forEach(function(npc) {
-            //the direction here is a number 0-3
-            var targetFrame = npc.direction * 3;
-            if (typeof npc.frameOffset === 'undefined') {
-                npc.frameOffset = 0;
-            }
-            npc.frame = targetFrame + npc.frameOffset % 3;
-            npc.frameOffset++;
-            npc.frame = npc.frame % 12;
-            //find the npcs in the tile
-            game.map.forEach(function(tile) {
-                if (typeof tile.npcSprite !== 'undefined') {
-                    if (tile.npcSprite.gridLocation.x === npc.x && tile.npcSprite.gridLocation.y === npc.y) {
-                        //set the new frame
-                        tile.npcSprite.frame = npc.frame;
-                    }
-                }
-            });
-        });
-    },
-    checkEvents: function() {
-        //this checks the event table for a stepped on event and
-        //runs the event key
-        game.mapData.events.forEach(function(event) {
-            if (event.x === game.player.gridLocation.x) {
-                if (event.y === game.player.gridLocation.y) {
-                    Events[event.key]();
-                }
-            }
-        });
+        Animate.player();
     },
     refresh: function() {
         //this function refreshes the entire grid
@@ -464,11 +262,8 @@ States.GameState.prototype = {
         console.log("refreshing")
 
         this.makeGrid();
-        //this.renderPassables()
-        this.renderStructures();
-        this.renderNPCS();
-        this.renderPlayer();
-        States.GameState.prototype.checkEvents();
+        Render.all();
+        Check.events();
     },
     scrollView: function() {
         //this function is called by update and scrolls the view
@@ -512,10 +307,10 @@ States.GameState.prototype = {
                     y: offSetY
                 };
 
-                //checkPath returns an object with new offsets
+                //Check.path returns an object with new offsets
                 //it will set the offset to 0 if it's blocked
 
-                var checkedPath = this.checkPath(game.player.gridLocation, proposed);
+                var checkedPath = Check.path(game.player.gridLocation, proposed);
 
                 offSetX = checkedPath.x;
                 offSetY = checkedPath.y;
@@ -556,80 +351,6 @@ States.GameState.prototype = {
             game.optionsPanel.update();
             game.walkPanel.update();
         }
-    },
-    checkPath: function(gridLocation, proposed) {
-        var offSetX = proposed.x;
-        var offSetY = proposed.y;
-        //this function checks the proposed path and returns
-        //an object containing the original offsets if it's clear
-        //but sets the offset to 0 if it's blocked.
-        
-        
-        if (offSetX > 0) { //left
-            //check index 0 of the one to the left
-            //passables
-            if (game.mapData.passables[gridLocation.y][gridLocation.x - 1][0]) {
-                offSetX = 0;
-            }
-            //player
-            if (game.player.gridLocation.x == gridLocation.x - 1 && game.player.gridLocation.y == gridLocation.y) {
-                offSetX = 0;
-            }
-            //npcs
-            game.mapData.npcs.forEach(function(npc) {
-                if (npc.x == gridLocation.x - 1 && npc.y == gridLocation.y) {
-                    offSetX = 0;
-                }
-            });
-        }
-        else if (offSetX < 0) { //right - note the patter for the second two conditionals
-            //is different from left
-            //check index 0 of the current tile
-            if (game.mapData.passables[gridLocation.y][gridLocation.x][0]) {
-                offSetX = 0;
-            }
-            game.mapData.npcs.forEach(function(npc) {
-                if (npc.x == gridLocation.x + 1 && npc.y == gridLocation.y) {
-                    offSetX = 0;
-                }
-            });
-            if (game.player.gridLocation.x == gridLocation.x + 1 && game.player.gridLocation.y == gridLocation.y) {
-                offSetX = 0;
-            }
-        }
-        else if (offSetY < 0) { //down
-            //check index 1 of the current tile
-            if (game.mapData.passables[gridLocation.y][gridLocation.x][1]) {
-                offSetY = 0;
-            }
-            game.mapData.npcs.forEach(function(npc) {
-                if (npc.x == gridLocation.x && npc.y == gridLocation.y + 1) {
-                    offSetY = 0;
-                }
-            });
-            if (game.player.gridLocation.x == gridLocation.x && game.player.gridLocation.y == gridLocation.y + 1) {
-                offSetY = 0;
-            }
-        }
-        else if (offSetY > 0) { //up
-            //check index 1 of the one above
-            if (game.mapData.passables[gridLocation.y - 1][gridLocation.x][1]) {
-                offSetY = 0;
-            }
-            game.mapData.npcs.forEach(function(npc) {
-                if (npc.x == gridLocation.x && npc.y == gridLocation.y - 1) {
-                    offSetY = 0;
-                }
-            });
-            if (game.player.gridLocation.x == gridLocation.x && game.player.gridLocation.y == gridLocation.y + 1) {
-                offSetY = 0;
-            }
-        }
-        //return the new offsets 0,0 if it's blocked
-        return {
-            x: offSetX,
-            y: offSetY
-        };
     },
     render: function() {
         //this shows the fps

@@ -3,7 +3,7 @@ var Menu = {
         //this function recturns a bordered gray rectangle
         //for use in the selector menu.
         var graphics = game.add.graphics(0, 0);
-        graphics.beginFill(0x000000);
+        graphics.beginFill(0x111111);
         graphics.lineStyle(5, 0xAAAAAA, 1);
         graphics.drawRect(0, 0, w, h);
         var texture = graphics.generateTexture();
@@ -14,13 +14,13 @@ var Menu = {
         //this function is used in the initial creation of the menu
         this.group = game.add.group();
         this.cursors = game.input.keyboard.createCursorKeys();
-        this.choiceGrop = game.add.group();
+        this.choiceGroup = game.add.group();
         //this.group.add(this.choiceGrop);
         this.spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
         this.dKey = game.input.keyboard.addKey(Phaser.Keyboard.D);
         Menu.spaceBar.onDown.add(this.spacePress);
         Menu.dKey.onDown.add(this.spacePress);
-        this.style.fontSize = game.width * .021;
+        this.style.fontSize = 20;
         return this;
     },
     spaceBarCallback: null,
@@ -52,10 +52,10 @@ var Menu = {
     openWalkMenu: function() {
         //opens the walk menu
         game.walkPanel.new({
-            w: game.width * .25,
-            h: game.width * .33,
-            x: game.width * .1,
-            y: game.width * .1,
+            w: 200,
+            h: 250,
+            x: 50,
+            y: 50,
             type: 'walkMenu'
         });
     },
@@ -80,8 +80,8 @@ var Menu = {
         };
         //create an options group based on the settings
         var choiceGroup = Menu.options(choiceSettings);
-        choiceGroup.x = game.width * .04;
-        choiceGroup.y = game.width * .03;
+        choiceGroup.x = 40;
+        choiceGroup.y = 30;
         this.group.add(choiceGroup);
 
         //this handles the selection of items in the walk menu
@@ -96,10 +96,10 @@ var Menu = {
                             //there is an NPC in the direction the player is facing
                             found = true;
                             game.dialogPanel.new({
-                                w: game.width * .5,
-                                h: game.height * .5,
-                                x: game.width * .25,
-                                y: game.height * .25,
+                                w: 800,
+                                h: 270,
+                                x: game.width / 2 - 400,
+                                y: game.height-270-50,
                                 type: 'dialog',
                                 dialog: game.dialog[npc.nameKey]
                             });
@@ -108,10 +108,10 @@ var Menu = {
                     if (!found) {
                         //nobody there
                         game.infoPanel.new({
-                            w: game.width * .5,
-                            h: game.height * .3,
-                            x: game.width * .25,
-                            y: game.height * .3,
+                            w: 400,
+                            h: 200,
+                            x: game.width / 2 - 200,
+                            y: 50,
                             type: 'infoPanel',
                             text: ["There's nobody there!"]
                         });
@@ -120,10 +120,10 @@ var Menu = {
                 default:
                     //temporary display for unfinished menus
                     game.infoPanel.new({
-                        w: game.width * .5,
-                        h: game.height * .3,
-                        x: game.width * .25,
-                        y: game.height * .3,
+                        w: 400,
+                        h: 200,
+                        x: game.width / 2 - 200,
+                        y: 50,
                         type: 'infoPanel',
                         text: ["That menu isn't finished yet!", "Stop clicking it.", "Please."]
                     });
@@ -146,9 +146,13 @@ var Menu = {
             Menu.flags = Menu.flags.concat(settings.dialog[settings.dialog.startKey].flags);
             //set the question
             var question = settings.dialog[settings.dialog.startKey].question;
-            //set the startKey
-            settings.dialog.startKey = settings.dialog[settings.dialog.startKey].key
-    
+
+            //set the next startKey
+            settings.dialog.startKey = settings.dialog[settings.dialog.startKey].key;
+
+
+
+
             if (settings.dialog.startKey === 'bye') {
                 //bye ends the conversation
                 Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 1))
@@ -158,6 +162,7 @@ var Menu = {
                     settings.dialog.startKey = settings.dialog['bye'].key;
                     Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 1) + '*');
                     Menu.spaceBarCallback = goodbye;
+
                     function goodbye() {
                         Menu.close(true);
                         Menu.flags.forEach(function(flag) {
@@ -169,9 +174,20 @@ var Menu = {
                 }
             }
             else if (settings.dialog.startKey !== null) {
+                //check for a "check"
+                //used to determine the next key based on a boolean
+                //useful for stores to determine if player has sufficient money, for example
+                console.log(settings.dialog.startKey)
+                if (typeof settings.dialog[settings.dialog.startKey].check !== 'undefined') {
+                    var checkpoint = settings.dialog[settings.dialog.startKey].check;
+                    if (eval(checkpoint[0])) //check the boolean for truth
+                    {
+                        settings.dialog.startKey = checkpoint[1]; //set the alternative startKey
+                    }
+                }
                 //there's still more to say
                 //remove the more caret
-                Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 1));
+                Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 2));
                 //type the next line
                 Menu.typeText(Menu.dialogText, settings.dialog[settings.dialog.startKey].text, 0, nextTalk);
             }
@@ -183,21 +199,25 @@ var Menu = {
 
                     function questionOptions() {
                         Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 1));
+                        console.log(settings.dialog.questions[question])
+                        console.log(settings.dialog.questions[question].options)
 
                         var choiceSettings = {
                             choiceArray: settings.dialog.questions[question].options,
                             keyArray: settings.dialog.questions[question].keys,
                             callback: endQuestion, //run after selection
-                            columns: 2,
+                            columns: settings.dialog.questions[question].columns,
                             clear: true
                         };
                         //make choices for the question
+                        console.log(choiceSettings)
                         var choiceGroup = Menu.options(choiceSettings);
                         //shift the group
-                        choiceGroup.x = Menu.panel.x + game.width * .02;
+                        choiceGroup.x = (Menu.panel.width - choiceGroup.width) / 2;
                         choiceGroup.y = Menu.dialogText.height + 20;
-                        Menu.dialogText.addChild(choiceGroup);
                         
+                        Menu.dialogText.addChild(choiceGroup);
+
                         //this is run after selection
                         function endQuestion() {
                             //we have a new startKey in the answer
@@ -207,12 +227,13 @@ var Menu = {
                             nextTalk();
                         }
                     }
-                }, 500);  //delay before the question is asked
+                }, 500); //delay before the question is asked
             }
         }
     },
     options: function(settings) {
-        //this generates a selectable list of options
+        console.log(settings)
+            //this generates a selectable list of options
         Menu.optionArray = [];
         var optionGroup = game.add.group();
         var choiceArray = settings.choiceArray;
@@ -223,15 +244,20 @@ var Menu = {
         game.caretColumns = columns;
 
         //go through the choices
+        var extraSpace = 0;
         choiceArray.forEach(function(option, index) {
             //add a sprite for each
-            var sprite = game.add.text(0 + (index % columns * Menu.panel.width / 2), 0 + (Math.floor(index / columns) * game.width * 0.05), option, Menu.style)
-            //adjust the col,row by the number of columns
+            var sprite = game.add.text(0 + (index % columns * Menu.panel.width / 2), extraSpace + (Math.floor(index / columns) * 35), option, Menu.style)
+                //adjust the col,row by the number of columns
+            sprite.wordWrapWidth = Menu.panel.width/columns
+            sprite.fontSize *= .8;
+            extraSpace+=(sprite.height-sprite.fontSize*1.3); 
+            
             sprite.menuLocation = {
                 col: index % columns,
                 row: Math.floor(index / columns)
             };
-            
+
             //set the sprites optionKey
             sprite.optionKey = keyArray[index];
             //push it into the stack
@@ -289,7 +315,7 @@ var Menu = {
             Menu.optionCaret.y = Menu.optionArray[Menu.optionSelected].y;
             setTimeout(function() {
                 Menu.caretMoving = false;
-            }, 180);  //unset lockout
+            }, 180); //unset lockout
         }
 
     },
@@ -310,7 +336,7 @@ var Menu = {
         //this types the text, char by char
         var characterIndex = 0;
         addChar();
-        
+
         function addChar() {
             //this is a recursive function
             //add another character
@@ -334,7 +360,7 @@ var Menu = {
                     setTimeout(addChar, 50);
                 }
             }
-            else {  //I'm done with the sentence
+            else { //I'm done with the sentence
                 //Another sentence?
                 if (startIndex < text.length - 1) {
                     //add a caret
@@ -345,7 +371,8 @@ var Menu = {
                     function nextLine(input) {
                         //spacebar pressed? 
                         //remove caret
-                        sprite.setText(sprite.text.substring(0, sprite.text.length - 1));
+                        console.log("here")
+                        sprite.setText(sprite.text.substring(0, sprite.text.length - 3));
                         //new line
                         sprite.setText(sprite.text + '\n');
                         //continue
@@ -364,6 +391,7 @@ var Menu = {
                         sprite.setText(sprite.text + '  >');
                         Menu.spaceBarCallback = callback;
                     }
+
                     function shutdown() {
                         //need this to set the input as true
                         Menu.close(true)
@@ -393,7 +421,7 @@ var Menu = {
                     Menu.spacePress();
                 }
             }
-            
+
             //adjust the optionSelected and move the caret
             if (Menu.cursors.down.isDown) {
                 Menu.optionSelected += game.caretColumns;
@@ -416,7 +444,7 @@ var Menu = {
     },
     style: { //text style
         font: 'Press Start 2P',
-        fill: '#AAAAAA',
+        fill: '#BBBBBB',
         align: 'left',
         wordWrap: true
     }

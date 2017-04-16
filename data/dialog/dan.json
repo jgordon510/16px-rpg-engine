@@ -7,49 +7,142 @@
          "event": null
      },
      "talk": {
-         "text": ["I love Springtime.", "It's my favorite season!"],
+         "text": ["I'm a demo NPC.", "I have several functions!"],
          "key": null,
-         "question": "season",
+         "question": "functions",
          "flags": [],
          "event": null
      },
      "questions": {
-         "season": {
-             "text": ["What's your favorite season?", "Answer honestly."],
-             "options": ["Winter", "Spring", "Summer", "Fall"],
-             "keys": ["winter", "spring", "summer", "fall"],
+         "functions": {
+             "text": ["What would you like to do?"],
+             "options": ["Shop", "Teleport", "Change Costume", "Be Rich"],
+             "keys": ["storeIntro", "teleport", "costume", "beRich"],
+             "columns":2,
+             "event": null
+         },
+         "store": {
+             "text":["What would you like?"],
+             "options": ["Hamburger......100","Pizza..........200","Blue Crystal...300","Red Crystal....400","Slingshot......500","Billy Club.....600","Gold Ring......700","Cloth Shirt....800", "Leather Shirt..900","Never Mind"],
+             "keys": ["buyItem1","buyItem2","buyItem3","buyItem4","buyItem5","buyItem6","buyItem7","buyItem8","buyItem9","bye"],
+             "columns":2,
+             "event": null
+         },
+         "shopMore": {
+             "text":["Would you like to shop more?"],
+             "options": ["Yes","No"],
+             "keys": ["storeIntro","bye"],
+             "columns":2,
              "event": null
          }
      },
-     "winter": {
-         "text": ["It's too cold for me!"],
-         "key": "bye",
-         "question": null,
+     "storeIntro": {
+         "text": ["I have several items for sale..."],
+         "key": null,
+         "question": "store",
          "flags": [],
          "event": null
      },
-     "spring": {
-         "text": ["It's perfect! You agree!"],
-         "key": "bye",
-         "question": null,
-         "flags": ["Events['introTown1']()"],
+     "buyItem1": {
+         "text": ["Okay!  Here's your burger!"],
+         "key": null,
+         "check":["game.playerData.gold<100","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=100"],
          "event": null
      },
-     "summer": {
-         "text": ["It's too hot for me!"],
-         "key": "bye",
-         "question": null,
+     "buyItem2": {
+         "text": ["Okay!  Here's your pizza!"],
+         "key": null,
+         "check":["game.playerData.gold<200","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=200"],
+         "event": null
+     },
+     "buyItem3": {
+         "text": ["Okay!  Here's the blue crystal!"],
+         "key": null,
+         "check":["game.playerData.gold<300","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=300"],
+         "event": null
+     },
+     "buyItem4": {
+         "text": ["Okay!  Here's the red crystal!"],
+         "key": null,
+         "check":["game.playerData.gold<400","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=400"],
+         "event": null
+     },
+     "buyItem5": {
+         "text": ["Okay!  Here's the slingshot!"],
+         "key": null,
+         "check":["game.playerData.gold<500","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=500"],
+         "event": null
+     },
+     "buyItem6": {
+         "text": ["Okay!  Here's the billy club!"],
+         "key": null,
+         "check":["game.playerData.gold<600","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=600"],
+         "event": null
+     },
+     "buyItem7": {
+         "text": ["Okay!  Here's the gold ring!"],
+         "key": null,
+         "check":["game.playerData.gold<700","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=700"],
+         "event": null
+     },
+     "buyItem8": {
+         "text": ["Okay!  Here's the cloth shirt!"],
+         "key": null,
+         "check":["game.playerData.gold<800","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=800"],
+         "event": null
+     },
+     "buyItem9": {
+         "text": ["Okay!  Here's the leather shirt!"],
+         "key": null,
+         "check":["game.playerData.gold<900","notEnoughMoney"],
+         "question": "shopMore",
+         "flags": ["game.playerData.gold-=900"],
+         "event": null
+     },
+     "notEnoughMoney": {
+         "text": ["You don't have enough money for that."],
+         "key": null,
+         "question": "shopMore",
          "flags": [],
          "event": null
      },
-     "fall": {
-         "text": ["It rains too much!"],
+     "teleport": {
+         "text": ["Okay, here we go!"],
          "key": "bye",
          "question": null,
-         "flags": [],
+         "flags": ["Events['introTown5']()"],
          "event": null
      },
-
+     "costume": {
+         "text": ["How about a naked baby?"],
+         "key": "bye",
+         "question": null,
+         "flags": ["game.playerSheet='baby'"],
+         "event": null
+     },
+     "beRich": {
+         "text": ["Here's 100,000 gold!"],
+         "key": "bye",
+         "question": null,
+         "flags": ["game.playerData.gold+=100000"],
+         "event": null
+     },
      "bye": {
          "text": ["It was nice to see you.", "Stop by again."],
          "key": "talk"
