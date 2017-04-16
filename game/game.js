@@ -44,11 +44,6 @@ States.GameState.prototype = {
     preload: function() {
         game.input.gamepad.start();
         game.pad = game.input.gamepad.pad1;
-
-
-
-
-
         //the saveCPU plugin reduces the idle CPU usage
         //https://github.com/photonstorm/phaser-plugins/tree/master/SaveCPU
         this.game.plugins.add(Phaser.Plugin.SaveCPU);
@@ -76,6 +71,7 @@ States.GameState.prototype = {
             x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
             y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
         };
+        //this described the movement for the player in both axes
         game.playerDirection = {
             x: 0,
             y: 0
@@ -84,10 +80,12 @@ States.GameState.prototype = {
         game.mapStart = null; //used to override the default map start loc
         game.moveTimeout = 300;
 
+        //load the maps
         game.mapList = game.cache.getJSON('mapList');
         game.mapList.forEach(function(key) {
             game.load.json(key, '../data/maps/' + key + '.json');
         });
+        //load the dialogs
         game.dialog = {};
         game.dialogList = game.cache.getJSON('dialogList');
         game.dialogList.forEach(function(key) {
@@ -101,6 +99,8 @@ States.GameState.prototype = {
         Phaser.scaleModes.DEFAULT = 1;
         //Load all textures described in the textures.json file
 
+        //load the textures
+        //TODO split this into folders
         game.textures = game.cache.getJSON('textures');
         for (var key in game.textures) {
             if (game.textures.hasOwnProperty(key)) {
@@ -125,30 +125,33 @@ States.GameState.prototype = {
         addFileDropper();
     },
     reload: function() {
-        game.map.destroy();
+        game.map.destroy();  
         game.structureGroup.destroy();
+        //close all the menus
         game.infoPanel.close(true);
         game.dialogPanel.close(true);
         game.selectionPanel.close(true);
         game.optionsPanel.close(true);
         game.walkPanel.close(true);
+        //reset the offsets
         game.offsets = {
             x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
             y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
         };
+        //rerun the create function
         this.create();
     },
     create: function() {
+        //load the dialog
         game.dialogList.forEach(function(character) {
             game.dialog[character] = game.cache.getJSON('dialog-' + character);
         });
-        //a set of cursor keys for navigation
+        
+        //a set keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
         game.spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 
-        // To listen to buttons from a specific pad listen directly on that pad game.input.gamepad.padX, where X = pad 1-4
-
-
+   
         //a group to hold the blank map tiles that parent everything
         //add a key for saving
         game.map = game.add.group();
@@ -172,20 +175,19 @@ States.GameState.prototype = {
         //make the grid of blank parent tiles
         this.makeGrid();
         //add the blank gray squares and passable lines to the grid
-        //todo probably don't want to render these
-        // this.renderPassables();
         //add the structures to the grid
         this.renderStructures();
-
-        //TODO add NPCs to the grid
+        //renderNPCS also handles movement
         this.renderNPCS();
+        //render the player sprite
         this.renderPlayer();
+        //make all the menus
         game.infoPanel = Menu.create();
         game.dialogPanel = Menu.create();
         game.selectionPanel = Menu.create();
         game.optionsPanel = Menu.create();
         game.walkPanel = Menu.create();
-        //swal("Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!', "success")
+        //Temporary intro welcome alert
         if (!game.displayedWelcome) {
             game.displayedWelcome = true;
             game.infoPanel.new({
@@ -197,6 +199,7 @@ States.GameState.prototype = {
                 text: ["Welcome to the intro!", 'You\'re a ' + game.playerSheet.toUpperCase() + '!']
             });
         }
+        //player's texture frame number
         game.player.frame = 0;
     },
     rectangleTexture: function(w, h) {
@@ -214,7 +217,6 @@ States.GameState.prototype = {
         //this function makes a group of blank tiles.
         //the blank tiles have no texture and are parents to everything else
         //this function is called by refresh
-
         game.map.removeAll(); //clear any previous grid
         game.map.scale.setTo(game.zoom, game.zoom);
         var tileSize = game.pxSize * game.zoom;
@@ -311,29 +313,33 @@ States.GameState.prototype = {
         });
     },
     renderPlayer: function() {
+        //get rid of the old player
         if (typeof game.player !== 'undefined') {
-
             game.player.destroy();
         }
         else {
+            //it's a new player, so the oldPlayerFrame must be set
             game.oldPlayerFrame = 0;
         }
+        //add player to middle tile
         game.player = game.add.sprite((game.map.centerTile.x - 1) * game.zoom, (game.map.centerTile.y - 1) * game.zoom, 'player_' + game.playerSheet);
+        //set the frame to the saved one
         game.player.frame = game.oldPlayerFrame;
+        //zoom
         game.player.scale.setTo(game.zoom);
+        //map location
         game.player.gridLocation = {
             x: game.map.centerTile.gridLocation.x,
             y: game.map.centerTile.gridLocation.y
         };
     },
-    renderEvents: function() {
-        //todo
-    },
     renderNPCS: function() {
+        //go through the npcs
         game.mapData.npcs.forEach(function(npc) {
+            //handle movement
             var offSetX = 0;
             var offSetY = 0;
-            if (Math.random() > 0.8) {
+            if (Math.random() > 0.8) { //1 in 5 chance to move
                 npc.direction = Math.floor(Math.random() * 4);
                 switch (npc.direction) {
                     case (0): //down
@@ -354,13 +360,13 @@ States.GameState.prototype = {
                 x: offSetX,
                 y: offSetY
             };
-
+            //check the path for obstacles
             var checkedPath = States.GameState.prototype.checkPath(npc, proposed);
             npc.x -= checkedPath.x;
             npc.y -= checkedPath.y;
+            //find the right tile and add the npc sprite to it
             game.map.forEach(function(tile) {
-                if (!npc.moved && npc.x == tile.gridLocation.x && npc.y == tile.gridLocation.y) {
-                    npc.moved = true;
+                if ( npc.x == tile.gridLocation.x && npc.y == tile.gridLocation.y) {
                     tile.npcSprite = game.add.sprite(0, 0, npc.key);
                     tile.npcSprite.frame = npc.frame;
                     tile.npcSprite.nameKey = npc.nameKey;
@@ -374,9 +380,7 @@ States.GameState.prototype = {
             });
 
         });
-        game.mapData.npcs.forEach(function(npc) {
-            npc.moved = false;
-        });
+        
     },
     update: function() {
         //this scans the keyboard for cursor presses
@@ -384,6 +388,9 @@ States.GameState.prototype = {
         this.animatePlayer();
     },
     animatePlayer: function() {
+        //this happens 3 times during the moveBlock
+        //game.turning is set to false 3 times by the timeout
+        //the setTimeout also runs the npc's movement
         if (!game.turning && game.moveBlock && !game.menuOpen) {
             game.turning = true;
             if (game.playerDirection.x === 1) {
@@ -398,27 +405,30 @@ States.GameState.prototype = {
             else if (game.playerDirection.y === -1) {
                 game.player.targetFrame = 0;
             }
-
+            
+            //set the frame
             game.player.frame = game.oldPlayerFrame;
             if (typeof game.player.frame === 'undefined') {
                 game.player.frame = 0;
                 game.playerFrameOffset = 0;
             }
             game.player.frame = game.player.targetFrame + game.playerFrameOffset % 3;
-            game.playerFrameOffset++;
-            game.player.frame = game.player.frame % 12;
+            game.playerFrameOffset++; //0,1,2
+            game.player.frame = game.player.frame % 12; //12 frames total
             game.oldPlayerFrame = game.player.frame;
             setTimeout(function() {
+                //reruns this funtion
                 game.turning = false;
+                //run the NPC animation each time too
                 States.GameState.prototype.animateNPCS();
             }, game.moveTimeout / 3);
-
         }
-
-
     },
     animateNPCS: function() {
+        //this is run by the setTimeout of the animatePlayer function
+        //3 times
         game.mapData.npcs.forEach(function(npc) {
+            //the direction here is a number 0-3
             var targetFrame = npc.direction * 3;
             if (typeof npc.frameOffset === 'undefined') {
                 npc.frameOffset = 0;
@@ -426,9 +436,11 @@ States.GameState.prototype = {
             npc.frame = targetFrame + npc.frameOffset % 3;
             npc.frameOffset++;
             npc.frame = npc.frame % 12;
+            //find the npcs in the tile
             game.map.forEach(function(tile) {
                 if (typeof tile.npcSprite !== 'undefined') {
                     if (tile.npcSprite.gridLocation.x === npc.x && tile.npcSprite.gridLocation.y === npc.y) {
+                        //set the new frame
                         tile.npcSprite.frame = npc.frame;
                     }
                 }
@@ -436,6 +448,8 @@ States.GameState.prototype = {
         });
     },
     checkEvents: function() {
+        //this checks the event table for a stepped on event and
+        //runs the event key
         game.mapData.events.forEach(function(event) {
             if (event.x === game.player.gridLocation.x) {
                 if (event.y === game.player.gridLocation.y) {
@@ -521,8 +535,6 @@ States.GameState.prototype = {
                         game.offsets.x -= offSetX;
                         game.offsets.y -= offSetY;
                         game.moveBlock = false;
-
-
                         game.map.x = 0;
                         game.map.y = 0;
                         this.refresh();
@@ -537,6 +549,7 @@ States.GameState.prototype = {
             }
         }
         else if (game.menuOpen) {
+            //update all the menus, because one is open
             game.infoPanel.update();
             game.dialogPanel.update();
             game.selectionPanel.update();
@@ -550,24 +563,27 @@ States.GameState.prototype = {
         //this function checks the proposed path and returns
         //an object containing the original offsets if it's clear
         //but sets the offset to 0 if it's blocked.
-        //TODO reduce to a function
-
+        
+        
         if (offSetX > 0) { //left
-
             //check index 0 of the one to the left
+            //passables
             if (game.mapData.passables[gridLocation.y][gridLocation.x - 1][0]) {
                 offSetX = 0;
             }
+            //player
             if (game.player.gridLocation.x == gridLocation.x - 1 && game.player.gridLocation.y == gridLocation.y) {
                 offSetX = 0;
             }
+            //npcs
             game.mapData.npcs.forEach(function(npc) {
                 if (npc.x == gridLocation.x - 1 && npc.y == gridLocation.y) {
                     offSetX = 0;
                 }
             });
         }
-        else if (offSetX < 0) { //right
+        else if (offSetX < 0) { //right - note the patter for the second two conditionals
+            //is different from left
             //check index 0 of the current tile
             if (game.mapData.passables[gridLocation.y][gridLocation.x][0]) {
                 offSetX = 0;
@@ -609,6 +625,7 @@ States.GameState.prototype = {
                 offSetY = 0;
             }
         }
+        //return the new offsets 0,0 if it's blocked
         return {
             x: offSetX,
             y: offSetY
