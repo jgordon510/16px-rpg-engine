@@ -98,28 +98,142 @@
         "type": "image"
     }],
     "npcs": [{
-        "key": "player_baby",
+        "key": "sheet-Albert",
         "type": "sheet"
     }, {
-        "key": "player_boy",
+        "key": "sheet-astronomer",
         "type": "sheet"
     }, {
-        "key": "player_ghost",
+        "key": "sheet-babies_mother",
         "type": "sheet"
     }, {
-        "key": "player_girl",
+        "key": "sheet-bartender",
         "type": "sheet"
     }, {
-        "key": "player_skeleton",
+        "key": "sheet-big_momma",
         "type": "sheet"
     }, {
-        "key": "player_slime",
+        "key": "sheet-Captain",
         "type": "sheet"
     }, {
-        "key": "player_spider",
+        "key": "sheet-chef",
         "type": "sheet"
     }, {
-        "key": "player_gator",
+        "key": "sheet-ChrisRock",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Darryl",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Doggy",
+        "type": "sheet"
+    }, {
+        "key": "sheet-drunkard0",
+        "type": "sheet"
+    }, {
+        "key": "sheet-drunkard1",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Faelon",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Farmer",
+        "type": "sheet"
+    }, {
+        "key": "sheet-fat_old_guy",
+        "type": "sheet"
+    }, {
+        "key": "sheet-geisha",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Goblin",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Guard",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Gunnar",
+        "type": "sheet"
+    }, {
+        "key": "sheet-guy_world",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Kamwerere",
+        "type": "sheet"
+    }, {
+        "key": "sheet-King",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Kitty",
+        "type": "sheet"
+    }, {
+        "key": "sheet-lady",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Mate",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Mel",
+        "type": "sheet"
+    }, {
+        "key": "sheet-mokkan",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Mom",
+        "type": "sheet"
+    }, {
+        "key": "sheet-prisoner",
+        "type": "sheet"
+    }, {
+        "key": "sheet-ring_bearer",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Rios",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Seaside_informant",
+        "type": "sheet"
+    }, {
+        "key": "sheet-shyzu_female",
+        "type": "sheet"
+    }, {
+        "key": "sheet-shyzu_male",
+        "type": "sheet"
+    }, {
+        "key": "sheet-soldier",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Tiggy",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Tipper",
+        "type": "sheet"
+    }, {
+        "key": "sheet-toddler",
+        "type": "sheet"
+    }, {
+        "key": "sheet-Trent",
+        "type": "sheet"
+    }, {
+        "key": "sheet-villager1",
+        "type": "sheet"
+    }, {
+        "key": "sheet-villager2",
+        "type": "sheet"
+    }, {
+        "key": "sheet-villager3",
+        "type": "sheet"
+    }, {
+        "key": "sheet-villager4",
+        "type": "sheet"
+    }, {
+        "key": "sheet-villager5",
+        "type": "sheet"
+    }, {
+        "key": "sheet-villager6",
+        "type": "sheet"
+    }, {
+        "key": "sheet-villager7",
         "type": "sheet"
     }]
 }

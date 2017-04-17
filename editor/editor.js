@@ -498,6 +498,7 @@ States.EditorState.prototype = {
         //calling the refresh function means the grid is redrawn 
         //with each keypress
         //it also turns the texture selection pages when ctrl is pressed
+        
         if (game.cursors.up.isDown) {
             game.offsets.y -= 1;
             this.refresh()
@@ -860,7 +861,7 @@ function newTextureGroup(button, page) {
           
         if(game.mode === 'N')
         {
-            frameArray =  game.cache.getFrameData(texture.key).getFrames()[2]; 
+            frameArray =  game.cache.getFrameData(texture.key).getFrames()[0]; 
             textureStartIndices[textureStartIndices.length-1].index = i;
         } 
         frames = frames.concat(frameArray);
