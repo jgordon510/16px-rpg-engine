@@ -2,25 +2,25 @@
     "player": [{
         "key": "player_baby",
         "type": "sheet"
-    },{
+    }, {
         "key": "player_boy",
         "type": "sheet"
-    },{
+    }, {
         "key": "player_ghost",
         "type": "sheet"
-    },{
+    }, {
         "key": "player_girl",
         "type": "sheet"
-    },{
+    }, {
         "key": "player_skeleton",
         "type": "sheet"
-    },{
+    }, {
         "key": "player_slime",
         "type": "sheet"
-    },{
+    }, {
         "key": "player_spider",
         "type": "sheet"
-    },{
+    }, {
         "key": "player_gator",
         "type": "sheet"
     }],
@@ -89,15 +89,36 @@
     }],
     "events": [{
         "key": "event",
-        "type":"image"
-    },{
+        "type": "image"
+    }, {
         "key": "select",
-        "type":"image"
-    },{
+        "type": "image"
+    }, {
         "key": "delete",
-        "type":"image"
+        "type": "image"
     }],
     "npcs": [{
+        "key": "player_baby",
+        "type": "sheet"
+    }, {
+        "key": "player_boy",
+        "type": "sheet"
+    }, {
+        "key": "player_ghost",
+        "type": "sheet"
+    }, {
+        "key": "player_girl",
+        "type": "sheet"
+    }, {
+        "key": "player_skeleton",
+        "type": "sheet"
+    }, {
+        "key": "player_slime",
+        "type": "sheet"
+    }, {
+        "key": "player_spider",
+        "type": "sheet"
+    }, {
         "key": "player_gator",
         "type": "sheet"
     }]

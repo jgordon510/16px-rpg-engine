@@ -857,6 +857,12 @@ function newTextureGroup(button, page) {
             index: frames.length
         });
         var frameArray = game.cache.getFrameData(texture.key).getFrames();
+          
+        if(game.mode === 'N')
+        {
+            frameArray =  game.cache.getFrameData(texture.key).getFrames()[2]; 
+            textureStartIndices[textureStartIndices.length-1].index = i;
+        } 
         frames = frames.concat(frameArray);
     });
 
@@ -866,8 +872,14 @@ function newTextureGroup(button, page) {
     var boxWidth = game.selectionPanelWidth * .25;
     //3x7 for long stacks
     //3x1 for the passables
+    var rowLimit = 1;
+    if(game.mode === 'S'  || game.mode === 'N')
+    {
+        rowLimit = 7;
+    }
+    console.log(rowLimit)
     for (var column = 0; column < 3; column++) {
-        for (var row = 0; row < (game.mode === 'S' ? 7 : 1); row++) {
+        for (var row = 0; row < rowLimit; row++) {
 
             //box and button
             var texture = null;
@@ -899,6 +911,10 @@ function newTextureGroup(button, page) {
             textureBox.addChild(textureSample);
             //add to the group
             game.textureGroup.add(textureBox);
+            if(frameCount >= frames.length && game.mode === 'N')
+            {
+                textureBox.destroy();
+            }
             frameCount++;
             if (column == 0 & row == 0) {
                 game.currentTexture = texture.key;
