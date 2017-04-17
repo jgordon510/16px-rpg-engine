@@ -44,7 +44,9 @@ States.GameState.prototype = {
     preload: function() {
         //temporary playerData object
         game.playerData = {
-            gold: 100
+            gold: 100,
+            inventory:["Rusty Sword"],
+            flags:{}
         };
         game.input.gamepad.start();
         game.pad = game.input.gamepad.pad1;
@@ -183,6 +185,7 @@ States.GameState.prototype = {
         Render.all();
         //make all the menus
         game.infoPanel = Menu.create();
+        game.itemPanel = Menu.create();
         game.dialogPanel = Menu.create();
         game.selectionPanel = Menu.create();
         game.optionsPanel = Menu.create();
@@ -350,6 +353,7 @@ States.GameState.prototype = {
             game.selectionPanel.update();
             game.optionsPanel.update();
             game.walkPanel.update();
+            game.itemPanel.update();
         }
     },
     render: function() {

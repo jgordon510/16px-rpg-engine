@@ -1,0 +1,69 @@
+{
+    "startKey": "meet",
+    "meet": {
+        "text": ["Hi, I'm Alice."],
+        "key": "talk",
+        "question": null
+    },
+    "talk": {
+        "text": ["I want to be a chef someday."],
+        "key": "working",
+        "question": null,
+        "flags": []
+    },
+    "working": {
+        "text": ["I'm working on my coconut soup recipe."],
+        "key": "coconut",
+        "question": null,
+        "flags": [],
+        "check": ["game.playerData.flags.AliceCoconutTrade","thanksAgain"]
+    },
+    "coconut": {
+        "text": ["If only I could find a coconut around here..."],
+        "key": "bye",
+        "question": null,
+        "check": ["game.playerData.inventory.indexOf('Coconut')>-1", "hasCoconut"],
+        "flags": []
+    },
+    "hasCoconut": {
+        "text": ["You have a coconut!"],
+        "key": null,
+        "question": "trade",
+        "flags": []
+    },
+    "thanksAgain": {
+        "text": ["Thanks again.", "I really enjoyed making that coconut soup."],
+        "key": "bye",
+        "question": null,
+        "flags": []
+    },
+    "declined": {
+        "text": ["That's too bad!", "I'll trade you any time."],
+        "key": "bye",
+        "question": null,
+        "flags": []
+    },
+    "accepted": {
+        "text": ["Wonderful!", "Here's your glass sword."],
+        "key": "bye",
+        "question": null,
+        "flags": ["game.playerData.flags.AliceCoconutTrade=true"],
+        "transaction": {
+            "gold": 0,
+            "add": ["Glass Sword"],
+            "remove": ["Coconut"]
+        }
+    },
+    "bye": {
+        "text": ["..."],
+        "key": "talk"
+    },
+    "questions": {
+        "trade": {
+            "text": ["Will you trade me your coconut for a glass sword?"],
+            "options": ["Yes", "No"],
+            "keys": ["accepted", "declined"],
+            "columns": 1
+        }
+    }
+}

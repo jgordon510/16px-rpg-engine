@@ -1,0 +1,21 @@
+{
+    "startKey": "meet",
+    "meet": {
+        "text": ["Hi, I'm Davis.", "Nice to meet you."],
+        "key": "talk",
+        "question": null,
+        "event": null
+    },
+    "talk": {
+        "text": ["I'm an NPC.", "This is what I say!"],
+        "key": "bye",
+        "question": null,
+        "flags": [],
+        "event": null
+    },
+    "bye": {
+        "text": ["It was nice to see you.", "Stop by again."],
+        "key": "talk"
+    },
+    "questions": {}
+}

@@ -1,0 +1,82 @@
+{
+    "startKey": "meet",
+    "meet": {
+        "text": ["Hi, I'm Betty, the curator of the Lycaeum.", "It's a pleasure to make your acquaintance.", "We have a disease that is killing our crops.", "I have a theory that the slimes in the dungeon may help to cure it."],
+        "key": "greenOffer",
+        "question": null
+    },
+    "talk": {
+        "text": ["I'm working on a cure for the disease that is destroying our crops."],
+        "key": "greenOffer",
+        "question": null,
+        "flags": []
+    },
+    "greenOffer": {
+        "text": ["Bring me some green slime juice and I'll give you 25 gold."],
+        "key": "bye",
+        "question": null,
+        "check": ["game.playerData.inventory.indexOf('Slime Juice (gr.)')>-1||game.playerData.flags.bettyGreen", "greenReward"],
+        "flags": []
+    },
+    "greenReward": {
+        "text": ["You've got the green slime!", "Here's your 25 gold!"],
+        "key": "blueOffer",
+        "question": null,
+        "check": ["game.playerData.flags.bettyGreen", "blueOffer"],
+        "flags": ["game.playerData.flags.bettyGreen = true"],
+        "transaction": {
+            "gold": 25,
+            "add": [],
+            "remove": ["Slime Juice (gr.)"]
+        }
+    },
+    "blueOffer": {
+        "text": ["Bring me some blue slime juice and I'll give you 50 gold."],
+        "key": "bye",
+        "question": null,
+        "check": ["game.playerData.inventory.indexOf('Slime Juice (bl.)')>-1||game.playerData.flags.bettyBlue", "blueReward"],
+        "flags": []
+    },
+    "blueReward": {
+        "text": ["You've got the blue slime!", "Here's your 50 gold!"],
+        "key": "redOffer",
+        "question": null,
+        "check": ["game.playerData.flags.bettyBlue", "redOffer"],
+        "flags": ["game.playerData.flags.bettyBlue = true"],
+        "transaction": {
+            "gold": 25,
+            "add": [],
+            "remove": ["Slime Juice (bl.)"]
+        }
+    },
+    "redOffer": {
+        "text": ["Bring me some red slime juice and I'll give you 100 gold."],
+        "key": "bye",
+        "question": null,
+        "check": ["game.playerData.inventory.indexOf('Slime Juice (rd.)')>-1||game.playerData.flags.bettyRed", "redReward"],
+        "flags": []
+    },
+    "redReward": {
+        "text": ["You've got the red slime!", "Here's your 150 gold!"],
+        "key": "done",
+        "question": null,
+        "check": ["game.playerData.flags.bettyRed", "done"],
+        "flags": ["game.playerData.flags.bettyRed = true"],
+        "transaction": {
+            "gold": 25,
+            "add": [],
+            "remove": ["Slime Juice (rd.)"]
+        }
+    },
+    "done": {
+        "text": ["Thanks for everything.", "You're helping us to save the crops!"],
+        "key": "bye",
+        "question": null,
+        "flags": []
+    },
+    "bye": {
+        "text": ["..."],
+        "key": "talk"
+    },
+    "questions": {}
+}

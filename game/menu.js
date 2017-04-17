@@ -66,6 +66,36 @@ var Menu = {
         this.typeText(this.infoText, settings.text, 0);
         this.group.add(this.infoText);
     },
+    itemPanel: function(settings) {
+        //an infoPanel that takes a settings object:
+        //x,y,h,w,type:string,text:[strings]
+        this.infoText = game.add.text(20, 20, 'Items:', this.style);
+        this.goldLabel = game.add.text(0,20, game.playerData.gold.toString() + " gold", this.style);
+        this.goldLabel.align = 'right';
+        this.goldLabel.right = Menu.panel.width - 20;
+        this.group.add(this.goldLabel)
+        this.group.add(this.infoText);
+        var choiceSettings = {
+            choiceArray: game.playerData.inventory,
+            keyArray: game.playerData.inventory,
+            callback: itemSelection,
+            columns: 2,
+            clear: false
+        };
+        //create an options group based on the settings
+        var choiceGroup = Menu.options(choiceSettings);
+        choiceGroup.x = 60;
+        choiceGroup.y = 70;
+        this.group.add(choiceGroup);
+
+        function itemSelection() {
+            var optionKey = Menu.optionArray[Menu.optionSelected].optionKey;
+            console.log(settings.callback)
+            console.log(optionKey)
+            Menu.close(true)
+        }
+
+    },
     walkMenu: function() {
         //this describes the walkMenu
         var options = ["Talk to", "Items", "Magic", "Wear", "Activate", "Status"];
@@ -95,11 +125,12 @@ var Menu = {
                         if (game.player.gridLocation.x - game.playerDirection.x === npc.x && game.player.gridLocation.y - game.playerDirection.y === npc.y) {
                             //there is an NPC in the direction the player is facing
                             found = true;
+                            //make the dialog panel
                             game.dialogPanel.new({
                                 w: 800,
                                 h: 270,
                                 x: game.width / 2 - 400,
-                                y: game.height-270-50,
+                                y: game.height - 270 - 50,
                                 type: 'dialog',
                                 dialog: game.dialog[npc.nameKey]
                             });
@@ -116,6 +147,16 @@ var Menu = {
                             text: ["There's nobody there!"]
                         });
                     }
+                    break;
+                case 'items':
+                    game.dialogPanel.new({
+                        w: 800,
+                        h: 450,
+                        x: game.width / 2 - 400,
+                        y: game.height / 2 - 300,
+                        type: 'itemPanel',
+                        callback: null
+                    });
                     break;
                 default:
                     //temporary display for unfinished menus
@@ -145,6 +186,7 @@ var Menu = {
             //add any new flags
             Menu.flags = Menu.flags.concat(settings.dialog[settings.dialog.startKey].flags);
             //set the question
+
             var question = settings.dialog[settings.dialog.startKey].question;
 
             //set the next startKey
@@ -152,7 +194,7 @@ var Menu = {
 
 
 
-
+            console.log(settings.dialog.startKey)
             if (settings.dialog.startKey === 'bye') {
                 //bye ends the conversation
                 Menu.dialogText.setText(Menu.dialogText.text.substring(0, Menu.dialogText.text.length - 1))
@@ -177,12 +219,44 @@ var Menu = {
                 //check for a "check"
                 //used to determine the next key based on a boolean
                 //useful for stores to determine if player has sufficient money, for example
-                console.log(settings.dialog.startKey)
-                if (typeof settings.dialog[settings.dialog.startKey].check !== 'undefined') {
-                    var checkpoint = settings.dialog[settings.dialog.startKey].check;
-                    if (eval(checkpoint[0])) //check the boolean for truth
-                    {
-                        settings.dialog.startKey = checkpoint[1]; //set the alternative startKey
+                evalCheckpoints();
+                evalTransactions();
+
+                function evalTransactions() {
+                    if (typeof settings.dialog[settings.dialog.startKey].transaction !== 'undefined') {
+
+                        var transaction = settings.dialog[settings.dialog.startKey].transaction;
+                        console.log(transaction)
+                        game.playerData.gold += transaction.gold;
+                        if (typeof transaction.add !== undefined) {
+                            game.playerData.inventory = game.playerData.inventory.concat(transaction.add);
+                        }
+                        if (typeof transaction.remove !== undefined) {
+                            transaction.remove.forEach(function(removal) {
+                                var index = game.playerData.inventory.indexOf(removal)
+                                if (index > -1) {
+                                    game.playerData.inventory.splice(index, 1);
+                                }
+                            });
+
+                        }
+
+                    }
+                }
+
+
+
+                function evalCheckpoints() {
+                    console.log(settings.dialog.startKey)
+                    if (typeof settings.dialog[settings.dialog.startKey].check !== 'undefined') {
+                        var checkpoint = settings.dialog[settings.dialog.startKey].check;
+                        console.log(checkpoint[0])
+                        if (eval(checkpoint[0])) //check the boolean for truth
+                        {
+                            console.log("new key: ", checkpoint[1])
+                            settings.dialog.startKey = checkpoint[1]; //set the alternative startKey
+                            evalCheckpoints()
+                        }
                     }
                 }
                 //there's still more to say
@@ -215,7 +289,7 @@ var Menu = {
                         //shift the group
                         choiceGroup.x = (Menu.panel.width - choiceGroup.width) / 2;
                         choiceGroup.y = Menu.dialogText.height + 20;
-                        
+
                         Menu.dialogText.addChild(choiceGroup);
 
                         //this is run after selection
@@ -249,10 +323,10 @@ var Menu = {
             //add a sprite for each
             var sprite = game.add.text(0 + (index % columns * Menu.panel.width / 2), extraSpace + (Math.floor(index / columns) * 35), option, Menu.style)
                 //adjust the col,row by the number of columns
-            sprite.wordWrapWidth = Menu.panel.width/columns
+            sprite.wordWrapWidth = Menu.panel.width / columns
             sprite.fontSize *= .8;
-            extraSpace+=(sprite.height-sprite.fontSize*1.3); 
-            
+            extraSpace += (sprite.height - sprite.fontSize * 1.3);
+
             sprite.menuLocation = {
                 col: index % columns,
                 row: Math.floor(index / columns)
@@ -476,11 +550,11 @@ function testWalkMenu() {
 
 function testDialog() {
     game.dialogPanel.new({
-        w: game.width * .5,
-        h: game.width * .5,
-        x: game.width * .25,
-        y: 100,
+        w: 800,
+        h: 270,
+        x: game.width / 2 - 400,
+        y: game.height - 270 - 50,
         type: 'dialog',
-        dialog: game.dialog['dan']
+        dialog: game.dialog['alice']
     });
 }
