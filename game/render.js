@@ -1,8 +1,8 @@
 Render = {
     all: function() {
         this.structures();
+        this.player(); 
         this.npcs();
-        this.player();    
     },
     structures: function() {
 
