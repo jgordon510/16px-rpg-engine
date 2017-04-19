@@ -1,9 +1,10 @@
 var Menu = {
-    rectangleTexture: function(w, h) {
+    rectangleTexture: function(w, h, bgColor) {
         //this function recturns a bordered gray rectangle
         //for use in the selector menu.
+        var backgroundColor = bgColor ||0x111111
         var graphics = game.add.graphics(0, 0);
-        graphics.beginFill(0x111111);
+        graphics.beginFill(backgroundColor);
         graphics.lineStyle(5, 0xAAAAAA, 1);
         graphics.drawRect(0, 0, w, h);
         var texture = graphics.generateTexture();
@@ -60,17 +61,22 @@ var Menu = {
         });
     },
     infoPanel: function(settings) {
+        console.log(settings)
         //an infoPanel that takes a settings object:
         //x,y,h,w,type:string,text:[strings]
         this.infoText = game.add.text(20, 20, '', this.style);
+        console.log("typetext")
         this.typeText(this.infoText, settings.text, 0);
         this.group.add(this.infoText);
+    },
+    combat: function(settings) {
+        Combat.attackMenu()
     },
     itemPanel: function(settings) {
         //an infoPanel that takes a settings object:
         //x,y,h,w,type:string,text:[strings]
         this.infoText = game.add.text(20, 20, 'Items:', this.style);
-        this.goldLabel = game.add.text(0,20, game.playerData.gold.toString() + " gold", this.style);
+        this.goldLabel = game.add.text(0, 20, game.playerData.gold.toString() + " gold", this.style);
         this.goldLabel.align = 'right';
         this.goldLabel.right = Menu.panel.width - 20;
         this.group.add(this.goldLabel)
@@ -90,9 +96,76 @@ var Menu = {
 
         function itemSelection() {
             var optionKey = Menu.optionArray[Menu.optionSelected].optionKey;
-            console.log(settings.callback)
             console.log(optionKey)
-            Menu.close(true)
+            console.log(game.items.usables[optionKey])
+            console.log(game.items.wearables[optionKey])
+
+            if (typeof game.items.usables[optionKey] !== 'undefined') {
+                //item is usable
+                var item = game.items.usables[optionKey]
+                var report = [];
+                if (typeof item["hpRecovery"] !== 'undefined' && item["hpRecovery"] != null) {
+                    game.playerData.stats.hp.current += item["hpRecovery"];
+                    report.push("You recovered " + item["hpRecovery"].toString() + " HP!");
+                    if (game.playerData.stats.hp.current >= game.playerData.stats.hp.max) {
+                        game.playerData.stats.hp.current = game.playerData.stats.hp.max;
+                        report.push("Your HP is now maxed out!");
+                    }
+                }
+                if (typeof item["mpRecovery"] !== 'undefined' && item["mpRecovery"] != null) {
+                    game.playerData.stats.mp.current += item["mpRecovery"];
+                    report.push("You recovered " + item["mpRecovery"].toString() + " MP!");
+                    if (game.playerData.stats.mp.current > game.playerData.stats.mp.max) {
+                        game.playerData.stats.mp.current = game.playerData.stats.mp.max;
+                        report.push("Your MP is now maxed out!");
+                    }
+                }
+                if (typeof item["statEffects"] !== 'undefined' && item["statEffects"] != null) {
+                    for (var key in item["statEffects"]) {
+                        if (item["statEffects"].hasOwnProperty(key)) {
+                            console.log(key + " -> " + item["statEffects"][key]);
+                            game.playerData.stats[key] += item["statEffects"][key].effect
+                            report.push('Your ' + game.playerData.stats[key] + ' has ' + item["statEffects"][key].effect > 0 ? 'increased' : 'decreased' + ' by ' + item["statEffects"][key].effect.toString() + '.');
+                        }
+                    }
+                }
+                if (typeof item["event"] !== 'undefined' && item["event"] != null) {
+                    eval(item["event"]);
+                }
+                //use it up
+                game.playerData.inventory.splice(Menu.optionSelected, 1)
+                game.infoPanel.new({
+                    w: 400,
+                    h: 200,
+                    x: game.width / 2 - 200,
+                    y: 50,
+                    type: 'infoPanel',
+                    text: report
+                });
+            }
+            else if (typeof game.items.wearables[optionKey] !== 'undefined') {
+
+                game.infoPanel.new({
+                    w: 400,
+                    h: 200,
+                    x: game.width / 2 - 200,
+                    y: 50,
+                    type: 'infoPanel',
+                    text: ["You need to wear that item."]
+                });
+            }
+            else {
+                game.infoPanel.new({
+                    w: 400,
+                    h: 200,
+                    x: game.width / 2 - 200,
+                    y: 50,
+                    type: 'infoPanel',
+                    text: ["What is that?"]
+                });
+                Menu.close(true);
+            }
+
         }
 
     },
@@ -321,7 +394,7 @@ var Menu = {
         var extraSpace = 0;
         choiceArray.forEach(function(option, index) {
             //add a sprite for each
-            var sprite = game.add.text(0 + (index % columns * Menu.panel.width / 2), extraSpace + (Math.floor(index / columns) * 35), option, Menu.style)
+            var sprite = game.add.text(0 + (index % columns * Menu.panel.width / columns), extraSpace + (Math.floor(index / columns) * 35), option, Menu.style)
                 //adjust the col,row by the number of columns
             sprite.wordWrapWidth = Menu.panel.width / columns
             sprite.fontSize *= .8;
@@ -368,6 +441,7 @@ var Menu = {
             //might handle this
             Menu.optionCaret.destroy();
             //run the callback
+            console.log("running cb")
             callback();
         }
 
@@ -407,6 +481,7 @@ var Menu = {
         Menu.caretMoving = true;
     },
     typeText: function(sprite, text, startIndex, callback) { //needs a settings object
+        console.log("running typetext")
         //this types the text, char by char
         var characterIndex = 0;
         addChar();
@@ -556,5 +631,15 @@ function testDialog() {
         y: game.height - 270 - 50,
         type: 'dialog',
         dialog: game.dialog['alice']
+    });
+}
+
+function testCombat() {
+    game.dialogPanel.new({
+        w: 800,
+        h: 270,
+        x: game.width / 2 - 400,
+        y: game.height - 270 - 50,
+        type: 'combat'
     });
 }

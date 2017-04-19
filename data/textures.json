@@ -235,5 +235,30 @@
     }, {
         "key": "sheet-villager7",
         "type": "sheet"
+    }],
+    "enemies": [{
+        "key": "enemy-goblin1",
+        "type": "image"
+    },{
+        "key": "enemy-goblin2",
+        "type": "image"
+    },{
+        "key": "enemy-goblin3",
+        "type": "image"
+    },{
+        "key": "enemy-goblin4",
+        "type": "image"
+    },{
+        "key": "enemy-goblin5",
+        "type": "image"
+    },{
+        "key": "enemy-goblin6",
+        "type": "image"
+    },{
+        "key": "enemy-goblin7",
+        "type": "image"
+    },{
+        "key": "enemy-goblin8",
+        "type": "image"
     }]
 }

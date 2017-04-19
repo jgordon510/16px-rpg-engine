@@ -1,0 +1,44 @@
+{
+    "goblin1": {
+        "textureKey": "enemy-goblin1",
+        "name":"Goblin Cavalry",
+        "hp": 50,
+        "mp": 10,
+        "offense": 50,
+        "defense": 50,
+        "spells": [],
+        "xp": [20, 30],
+        "drops": [{
+            "item": "Hamburger",
+            "chance": 0.2
+        }]
+    },
+    "goblin2": {
+        "textureKey": "enemy-goblin2",
+        "name":"Goblin Mage",
+        "hp": 50,
+        "mp": 10,
+        "offense": 50,
+        "defense": 50,
+        "spells": [],
+        "xp": [20, 30],
+        "drops": [{
+            "item": "Hamburger",
+            "chance": 0.2
+        }]
+    },
+    "goblin3": {
+        "textureKey": "enemy-goblin3",
+        "name":"Goblin Slicer",
+        "hp": 50,
+        "mp": 10,
+        "offense": 50,
+        "defense": 50,
+        "spells": [],
+        "xp": [20, 30],
+        "drops": [{
+            "item": "Hamburger",
+            "chance": 0.2
+        }]
+    }
+}

@@ -1,0 +1,30 @@
+{
+    "usables": {
+        "Hamburger": {
+            "description": "This tasty sandwich recovers 20hp.",
+            "hpRecovery": 20,
+            "mpRecovery": null,
+            "buyPrice": null,
+            "sellPrice": null,
+            "event": null,
+            "statEffect": {
+                "offense": {
+                    "effect": 1,
+                    "permanent": true
+                }
+            }
+        }
+    },
+    "wearables": {
+        "Rusty Sword": {
+            "description": "Hopefully it will last long enough to get away.",
+            "offenseEffect": null,
+            "defenseEffect": null,
+            "statEffect": {
+                "offense": {
+                    "effect": 1
+                }
+            }
+        }
+    }
+}

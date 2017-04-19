@@ -20,6 +20,8 @@ States.LoadFonts.prototype = {
         game.load.json('textures', '../data/textures.json'); //this describes the 16px tile textures
         game.load.json('mapList', '../data/mapList.json');
         game.load.json('dialogList', '../data/dialogList.json');
+        game.load.json('itemList', '../data/items.json');
+        game.load.json('enemyList', '../data/enemies.json');
         game.time.advancedTiming = true; //used to check the fps in the render function
     },
     create: function() {
@@ -46,7 +48,16 @@ States.GameState.prototype = {
         game.playerData = {
             gold: 100,
             inventory:["Rusty Sword"],
-            flags:{}
+            flags:{},
+            stats:{
+                hp:{current:50,
+                    max: 100
+                },
+                mp:{current:5,
+                    max: 10
+                },
+                offense:5
+            }
         };
         game.input.gamepad.start();
         game.pad = game.input.gamepad.pad1;
@@ -97,8 +108,9 @@ States.GameState.prototype = {
         game.dialogList.forEach(function(key) {
             game.dialog[key] = game.load.json('dialog-' + key, '../data/dialog/' + key + '.json');
         });
-
-
+        
+        game.items = game.cache.getJSON('itemList');
+        game.enemies = game.cache.getJSON('enemyList');
 
         //this removes any dithering from scaling
         //this gives similar results to phaser's tilemap scaling
@@ -185,6 +197,7 @@ States.GameState.prototype = {
         Render.all();
         //make all the menus
         game.infoPanel = Menu.create();
+        
         game.itemPanel = Menu.create();
         game.dialogPanel = Menu.create();
         game.selectionPanel = Menu.create();
@@ -204,6 +217,7 @@ States.GameState.prototype = {
         }
         //player's texture frame number
         game.player.frame = 0;
+        
     },
     rectangleTexture: function(w, h) {
         //this function recturns a bordered gray rectangle
