@@ -484,6 +484,7 @@ var Menu = {
         console.log("running typetext")
         //this types the text, char by char
         var characterIndex = 0;
+        
         addChar();
 
         function addChar() {

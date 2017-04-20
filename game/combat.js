@@ -33,6 +33,7 @@ States.Combat.prototype = {
                 enemySprite.shadow = shadow;
                 enemySprite.rowNumber = rowNumber;
                 enemySprite.enemyNumber = enemyNumber;
+                enemySprite.hp = game.enemies[enemy].hp;
                 game.enemyArray.push(enemySprite)
                 enemySprite.anchor.setTo(0, 1);
                 var label = game.add.text(enemySprite.x + enemySprite.width / 2, enemySprite.y + 10, game.enemies[enemy].name, Menu.style)
@@ -56,38 +57,31 @@ States.Combat.prototype = {
                 enemy.tint = 0xff3333
                 enemy.shadow.tint = 0xff0000
                 enemy.label.tint = 0xff8888
+                Combat.enemySelected.sprite = enemy;
             }
             else {
                 enemy.tint = 0xFFFFFF
-                enemy.shadow.tint = 0xFFFFFF
+                enemy.shadow.tint = 0x000000
                 enemy.label.tint = 0xFFFFFF
             }
         });
         if (Combat.selecting && !game.combatSelectionTimeout) {
-            if (game.cursors.right.isDown) {
+            if (game.cursors.right.isDown || game.cursors.down.isDown) {
                 game.combatSelectionTimeout = true;
                 Combat.enemySelected.enemyNumber++;
                 checkBounds('enemy');
-
             }
-            else if (game.cursors.left.isDown) {
+            else if (game.cursors.left.isDown || game.cursors.up.isDown) {
                 game.combatSelectionTimeout = true;
                 Combat.enemySelected.enemyNumber--;
                 checkBounds('enemy');
-
             }
-            else if (game.cursors.up.isDown) {
-                game.combatSelectionTimeout = true;
-                Combat.enemySelected.row++;
-                checkBounds();
-
-
-            }
-            else if (game.cursors.down.isDown) {
-                game.combatSelectionTimeout = true;
-                Combat.enemySelected.row--;
-                checkBounds();
-
+            
+            if(game.spaceBar.isDown){
+                console.log(Combat.enemySelected.sprite)
+                var key = game.combatEnemies[Combat.enemySelected.row][Combat.enemySelected.enemyNumber];
+                console.log(Combat.enemySelected.sprite)
+                Combat.selecting=false;
             }
 
             function checkBounds(type) {
@@ -125,9 +119,6 @@ States.Combat.prototype = {
                         }
                     }
                 }
-
-
-
             }
 
             if (game.combatSelectionTimeout) {
@@ -189,7 +180,11 @@ var Combat = {
         console.log(type);
 
         if (type === 'Hit') {
-            Combat.selecting = true;;
+            Combat.selecting = true;
+            game.combatSelectionTimeout = true;
+            setTimeout(function() {
+                game.combatSelectionTimeout = false;
+            }, 500)
         }
     },
     newPanel: function() {
