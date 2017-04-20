@@ -3,6 +3,8 @@ This is an engine for a top-down story-based rpg with 16px square tiles.  It is 
 Long-term developement plans include a system for simple cut scene animations, combat, weapons, magic, and stat progress - all relying on JSON files for their data.
 #Map Editor
 Currently, the map defaults to a 50x50 blank grid.  Running the blankGrid() function from the console will allow creation of an arbitrary sized grid.
+Dragging a previously saved map file (crtl-s) onto the window, will open the file for editing.
+![alt text](screenshot_editor.png "Game Screenshot")
 ## P - Passables
 Passables allow for blocking player movement.  Select the proper icon to block the right or bottom path from the tile.  They can be combined.  The blank square clears both paths.  (Blocking the bottom, also blocks movement from the square below, as does right to left.)
 ## S - Structures
