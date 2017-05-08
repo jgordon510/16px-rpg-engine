@@ -84,14 +84,14 @@ States.EditorState.prototype = {
                 game.textures[key].forEach(function(texture) {
                     if (texture.type === "image") {
                         //regular image
-                        game.load.image(texture.key, '../assets/' + texture.key + '.png');
+                        game.load.image(texture.key, '../assets/' + key + '/' + texture.key + '.png');
                     }
                     else if (texture.type === "sheet") {
                         //spritesheet
                         //each tile has a 1px border around it of transparency to avoid dithering
                         //these files are created with the sheetMaker bash script in the assets folder
                         //1px+16px+1px=18px
-                        game.load.spritesheet(texture.key, '../assets/' + texture.key + '.png', 18, 18);
+                        game.load.spritesheet(texture.key, '../assets/' + key + '/' + texture.key + '.png', 18, 18);
                     }
 
                 });
@@ -136,6 +136,7 @@ States.EditorState.prototype = {
         this.renderEvents();
         //TODO add NPCs to the grid
         this.renderNPCS();
+        this.renderEnemies();
         //create the highlighted tile that follows the mouse cursor 
         this.makeHighlightedTile();
         //it shows the current texture setting
@@ -445,6 +446,24 @@ States.EditorState.prototype = {
             });
         }
     },
+    renderEnemies: function() {
+        game.prompedForEnemyKey = false;
+        game.map.forEach(function(tile) {
+            game.mapData.enemies.forEach(function(enemy) {
+                if (enemy.x == tile.gridLocation.x && enemy.y == tile.gridLocation.y) {
+                    tile.enemySprite = game.add.sprite(0, 0, 'map_enemy');
+                    var label = game.add.text(tile.enemySprite.width/2,0,enemy.key,game.style);
+                    label.scale.setTo(tile.width/label.width*.9,tile.width/label.width*.9);
+                    label.fontWeight = 'bold';
+                    label.anchor.setTo(0.5,0.8);
+                    tile.enemySprite.addChild(label);
+                    tile.addChild(tile.enemySprite); //add to the blank grid 
+                }
+            });
+
+
+        });
+    },
     renderEvents: function() {
         //todo
         game.prompedForEventKey = false;
@@ -491,6 +510,7 @@ States.EditorState.prototype = {
         this.renderPassables();
         this.renderStructures();
         this.renderEvents();
+        this.renderEnemies();
         this.renderNPCS();
     },
     scrollView: function() {
@@ -498,7 +518,7 @@ States.EditorState.prototype = {
         //calling the refresh function means the grid is redrawn 
         //with each keypress
         //it also turns the texture selection pages when ctrl is pressed
-        
+
         if (game.cursors.up.isDown) {
             game.offsets.y -= 1;
             this.refresh()
@@ -688,8 +708,9 @@ function setTiles(tile) {
             break;
         case 'E':
             //an object representing the current structure
-
-            if (game.textureColumn == 0) //event
+            console.log(game.textureRow)
+            console.log(game.textureColumn)
+            if (game.textureColumn == 0 && game.textureRow == 0) //event
             {
                 if (!game.prompedForEventKey) {
                     game.prompedForEventKey = true;
@@ -719,7 +740,8 @@ function setTiles(tile) {
                 }
 
             }
-            else if (game.textureColumn == 1) {
+            else if (game.textureColumn == 1 && game.textureRow == 0) {
+                console.log("highlight")
                 game.mapData.structures.forEach(function(existingStructure, index) {
                     //this function is below and compares two object for sameness
                     if (existingStructure.x === tile.gridLocation.x && existingStructure.y === tile.gridLocation.y) {
@@ -727,13 +749,45 @@ function setTiles(tile) {
                     }
                 });
             }
-            else if (game.textureColumn == 2) {
+            else if (game.textureColumn == 0 && game.textureRow == 1) {
                 //if I already have an event here, I don't need two
+                console.log("deletion")
                 for (var i = game.mapData.structures.length - 1; i >= 0; i--) {
                     var existingStructure = game.mapData.structures[i];
                     if (existingStructure.x === tile.gridLocation.x && existingStructure.y === tile.gridLocation.y) {
                         game.mapData.structures.splice(i, 1);
                     }
+                }
+            }
+            else if (game.textureColumn == 0 && game.textureRow == 2) {
+                //if I already have an event here, I don't need two
+                console.log("enemy");
+
+                if (!game.prompedForEnemyKey) {
+                    game.prompedForEnemyKey = true;
+                    var cohortKey = prompt("Enter the enemy cohort array: ");
+                }
+
+                if (typeof cohortKey === 'undefined') {
+                    var cohortKey = game.mapData.enemies[game.mapData.enemies.length - 1].cohort;
+                }
+                var enemy = {
+                    cohort: cohortKey,
+                    x: tile.gridLocation.x,
+                    y: tile.gridLocation.y
+                };
+                //if I already have an event here, I don't need two
+                var found = false;
+                game.mapData.enemies.forEach(function(existingEnemy, index) {
+                    //this function is below and compares two object for sameness
+                    if (existingEnemy.x === tile.gridLocation.x && existingEnemy.y === tile.gridLocation.y) {
+                        console.log("already there!")
+                        found = true;
+                    }
+                });
+                //set the data
+                if (!found) {
+                    game.mapData.enemies.push(enemy);
                 }
             }
 
@@ -858,12 +912,11 @@ function newTextureGroup(button, page) {
             index: frames.length
         });
         var frameArray = game.cache.getFrameData(texture.key).getFrames();
-          
-        if(game.mode === 'N')
-        {
-            frameArray =  game.cache.getFrameData(texture.key).getFrames()[0]; 
-            textureStartIndices[textureStartIndices.length-1].index = i;
-        } 
+
+        if (game.mode === 'N') {
+            frameArray = game.cache.getFrameData(texture.key).getFrames()[0];
+            textureStartIndices[textureStartIndices.length - 1].index = i;
+        }
         frames = frames.concat(frameArray);
     });
 
@@ -874,10 +927,13 @@ function newTextureGroup(button, page) {
     //3x7 for long stacks
     //3x1 for the passables
     var rowLimit = 1;
-    if(game.mode === 'S'  || game.mode === 'N')
-    {
+    if (game.mode === 'S' || game.mode === 'N') {
         rowLimit = 7;
     }
+    else if (game.mode === 'E') {
+        rowLimit = 2;
+    }
+
     console.log(rowLimit)
     for (var column = 0; column < 3; column++) {
         for (var row = 0; row < rowLimit; row++) {
@@ -901,7 +957,8 @@ function newTextureGroup(button, page) {
             textureBox.events.onInputDown.add(setTexture); //below
             //properties used by setTexture()
             textureBox.frameNumber = (frameCount + page * 21) % frames.length - texture.index;
-            textureBox.column = column;
+            textureBox.column = row;
+            textureBox.row = column;
             textureBox.textureData = texture;
 
             //a picture of the texture added as a child
@@ -912,8 +969,10 @@ function newTextureGroup(button, page) {
             textureBox.addChild(textureSample);
             //add to the group
             game.textureGroup.add(textureBox);
-            if(frameCount >= frames.length && game.mode === 'N')
-            {
+            if (frameCount >= frames.length && game.mode === 'N') {
+                textureBox.destroy();
+            }
+            if (game.mode === 'E' && row > 0 && column > 0) {
                 textureBox.destroy();
             }
             frameCount++;
@@ -925,6 +984,7 @@ function newTextureGroup(button, page) {
             function setTexture(sprite, pointer) {
                 var frameNumber = sprite.frameNumber
                 game.textureColumn = sprite.column;
+                game.textureRow = sprite.row;
                 var texture = sprite.textureData
                 if (typeof game.oldSelected !== 'undefined') {
                     game.oldSelected.tint = 0xffffff;

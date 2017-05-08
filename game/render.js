@@ -1,8 +1,9 @@
 Render = {
     all: function() {
         this.structures();
-        this.player(); 
+        this.player();
         this.npcs();
+        this.enemies();
     },
     structures: function() {
 
@@ -36,6 +37,91 @@ Render = {
                     tile.structureSpriteArray.push(structSprite);
                 }
             });
+        });
+
+    },
+    enemies: function() {
+        //go through the enemies
+        game.mapData.enemies.forEach(function(enemy) {
+            //handle movement
+            var offSetX = 0;
+            var offSetY = 0;
+            if (!enemy.dead && Math.abs(game.player.gridLocation.x - enemy.x) < 5 && Math.abs(game.player.gridLocation.y - enemy.y) < 5) {
+                console.log("I SEE YOU")
+                if (Math.abs(game.player.gridLocation.x - enemy.x) > Math.abs(game.player.gridLocation.y - enemy.y)) {
+                    if (game.player.gridLocation.x < enemy.x) {
+                        offSetX++;
+                    }
+                    else {
+                        offSetX--;
+                    }
+                }
+                else {
+                    if (game.player.gridLocation.y < enemy.y) {
+                        offSetY++;
+                    }
+                    else {
+                        offSetY--;
+                    }
+                }
+            }
+            var proposed = {
+                x: offSetX,
+                y: offSetY
+            };
+            //check the path for obstacles
+            var checkedPath = Check.path(enemy, proposed);
+            enemy.x -= checkedPath.x;
+            enemy.y -= checkedPath.y;
+            //find the right tile and add the npc sprite to it
+
+            game.map.forEach(function(tile) {
+                if (!enemy.dead && enemy.x == tile.gridLocation.x && enemy.y == tile.gridLocation.y) {
+                    tile.npcSprite = game.add.sprite(0, 0, 'map_enemy');
+                    tile.npcSprite.frame = enemy.frame;
+                    tile.npcSprite.nameKey = enemy.nameKey;
+                    tile.npcSprite.alpha = 0.2;
+                    tile.npcSprite.gridLocation = {
+                        x: enemy.x,
+                        y: enemy.y
+                    };
+                    //console.log(game.physics.arcade.distanceBetween(tile, game.map.centerTile)/ game.pxSize)
+                    tile.addChild(tile.npcSprite); //add to the blank grid 
+                    if (Math.abs(game.player.gridLocation.x - enemy.x) <= 1 && Math.abs(game.player.gridLocation.y - enemy.y) <= 1) {
+                        console.log("START COMBAT HERE");
+                        enemy.dead = true;
+                        game.moveBlock = true;
+                        game.combatEnemies = [
+                            eval(enemy.cohort)
+                        ];
+                        
+                        game.screenShot = game.map.generateTexture();
+                        game.screenShot.offSetX = game.map.left;
+                        game.screenShot.offSetY = game.map.top;
+                        var reds = [0x000000, 0x110000, 0x220000, 0x330000, 0x440000, 0x550000, 0x660000, 0x770000, 0x880000, 0x990000, 0xaa0000, 0xbb0000, 0xcc0000, 0xdd0000, 0xee0000, 0xff0000]
+                        var frame = 0;
+                        tintRed()
+                        function tintRed() {
+                            tile.npcSprite.tint = reds[frame];
+                            if(tile.npcSprite.alpha < 1)
+                            {
+                                tile.npcSprite.alpha += 0.03
+                            } 
+                            frame++;
+                            if (frame < reds.length) {
+                                setTimeout(tintRed, 100);
+                            }
+                            else {
+                                setTimeout(function() {
+                                    game.state.start('Combat');
+                                }, 500)
+                            }
+                        }
+                    }
+                }
+            });
+
+
         });
 
     },
@@ -81,14 +167,11 @@ Render = {
                         x: npc.x,
                         y: npc.y
                     };
+                    //console.log(game.physics.arcade.distanceBetween(tile, game.map.centerTile)/ game.pxSize)
                     tile.addChild(tile.npcSprite); //add to the blank grid 
                 }
             });
-
         });
-
-
-
     },
     player: function() {
         //get rid of the old player
@@ -110,7 +193,5 @@ Render = {
             x: game.map.centerTile.gridLocation.x,
             y: game.map.centerTile.gridLocation.y
         };
-
-
     }
 };

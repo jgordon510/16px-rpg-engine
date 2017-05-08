@@ -2,10 +2,10 @@
     "goblin1": {
         "textureKey": "enemy-goblin1",
         "name":"Goblin Cavalry",
-        "hp": 50,
+        "hp": 15,
         "mp": 10,
-        "offense": 50,
-        "defense": 50,
+        "offense": 5,
+        "defense": 5,
         "spells": [],
         "xp": [20, 30],
         "drops": [{
@@ -16,10 +16,10 @@
     "goblin2": {
         "textureKey": "enemy-goblin2",
         "name":"Goblin Mage",
-        "hp": 50,
+        "hp": 15,
         "mp": 10,
-        "offense": 50,
-        "defense": 50,
+        "offense": 5,
+        "defense": 5,
         "spells": [],
         "xp": [20, 30],
         "drops": [{
@@ -30,10 +30,10 @@
     "goblin3": {
         "textureKey": "enemy-goblin3",
         "name":"Goblin Slicer",
-        "hp": 50,
+        "hp": 15,
         "mp": 10,
-        "offense": 50,
-        "defense": 50,
+        "offense": 5,
+        "defense": 5,
         "spells": [],
         "xp": [20, 30],
         "drops": [{

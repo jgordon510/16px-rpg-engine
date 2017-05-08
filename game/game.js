@@ -45,102 +45,120 @@ States.GameState = function() {};
 States.GameState.prototype = {
     preload: function() {
         //temporary playerData object
-        game.playerData = {
-            gold: 100,
-            inventory:["Rusty Sword"],
-            flags:{},
-            stats:{
-                hp:{current:50,
-                    max: 100
-                },
-                mp:{current:5,
-                    max: 10
-                },
-                offense:5
+        console.log("starting gamestate")
+        if (!game.firstLoaded) {
+            game.firstLoaded = true;
+            game.playerData = {
+                gold: 100,
+                inventory: ["Rusty Sword"],
+                flags: {},
+                stats: {
+                    hp: {
+                        current: 30,
+                        max: 30
+                    },
+                    mp: {
+                        current: 5,
+                        max: 10
+                    },
+                    offense: 10,
+                    defense: 10
+                }
+            };
+            //the saveCPU plugin reduces the idle CPU usage
+            //https://github.com/photonstorm/phaser-plugins/tree/master/SaveCPU
+            this.game.plugins.add(Phaser.Plugin.SaveCPU);
+            game.input.gamepad.start();
+            game.pad = game.input.gamepad.pad1;
+            //Temporary:
+            //load with a random player texture
+            //There will be a general settings object that replaces many of these settings
+            //This will be tied to the map key in a json file and will override defaults
+            var sheetChoices = ['baby', 'boy', 'ghost', 'girl', 'skeleton', 'slime', 'spider', 'gator'];
+            var randomIndex = Math.floor(Math.random() * sheetChoices.length);
+            game.playerSheet = sheetChoices[randomIndex];
+
+            //this is a general style for the menus
+            game.style = {
+                font: 'Inconsolata',
+                fill: '#002222',
+                align: 'center',
+                fontSize: 34
+            };
+            //the game's zoom factor
+            game.zoom = 3;
+
+            game.pxSize = 16; //don't change
+            //the scroll offsets
+            //we want to scroll back half each dimension in tiles
+
+            //this described the movement for the player in both axes
+            game.playerDirection = {
+                x: 0,
+                y: 0
+            };
+            game.mapKey = 'introStart'; //the default json file to load
+            game.mapStart = null; //used to override the default map start loc
+            game.moveTimeout = 300;
+
+            //load the maps
+            game.mapList = game.cache.getJSON('mapList');
+            game.mapList.forEach(function(key) {
+                game.load.json(key, '../data/maps/' + key + '.json');
+            });
+            //load the dialogs
+            game.dialog = {};
+            game.dialogList = game.cache.getJSON('dialogList');
+            game.dialogList.forEach(function(key) {
+                game.dialog[key] = game.load.json('dialog-' + key, '../data/dialog/' + key + '.json');
+            });
+
+            game.items = game.cache.getJSON('itemList');
+            game.enemies = game.cache.getJSON('enemyList');
+
+            //this removes any dithering from scaling
+            //this gives similar results to phaser's tilemap scaling
+            Phaser.scaleModes.DEFAULT = 1;
+            //Load all textures described in the textures.json file
+
+            //load the textures
+            //TODO split this into folders
+            game.textures = game.cache.getJSON('textures');
+            
+            for (var key in game.textures) {
+                if (game.textures.hasOwnProperty(key)) {
+                    game.textures[key].forEach(function(texture) {
+                        if (texture.type === "image") {
+                            //regular image
+                            game.load.image(texture.key, '../assets/' + key + '/'+ texture.key + '.png');
+                        }
+                        else if (texture.type === "sheet") {
+                            //spritesheet
+                            //each tile has a 1px border around it of transparency to avoid dithering
+                            //these files are created with the sheetMaker bash script in the assets folder
+                            //1px+16px+1px=18px
+                            game.load.spritesheet(texture.key, '../assets/' + key + '/'+ texture.key + '.png', 18, 18);
+                        }
+
+                    });
+                }
             }
-        };
-        game.input.gamepad.start();
-        game.pad = game.input.gamepad.pad1;
-        //the saveCPU plugin reduces the idle CPU usage
-        //https://github.com/photonstorm/phaser-plugins/tree/master/SaveCPU
-        this.game.plugins.add(Phaser.Plugin.SaveCPU);
-        //Temporary:
-        //load with a random player texture
-        //There will be a general settings object that replaces many of these settings
-        //This will be tied to the map key in a json file and will override defaults
-        var sheetChoices = ['baby', 'boy', 'ghost', 'girl', 'skeleton', 'slime', 'spider', 'gator'];
-        var randomIndex = Math.floor(Math.random() * sheetChoices.length);
-        game.playerSheet = sheetChoices[randomIndex];
-
-        //this is a general style for the menus
-        game.style = {
-            font: 'Inconsolata',
-            fill: '#002222',
-            align: 'center',
-            fontSize: 34
-        };
-        //the game's zoom factor
-        game.zoom = 3;
-        game.pxSize = 16; //don't change
-        //the scroll offsets
-        //we want to scroll back half each dimension in tiles
-        game.offsets = {
-            x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
-            y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
-        };
-        //this described the movement for the player in both axes
-        game.playerDirection = {
-            x: 0,
-            y: 0
-        };
-        game.mapKey = 'introStart'; //the default json file to load
-        game.mapStart = null; //used to override the default map start loc
-        game.moveTimeout = 300;
-
-        //load the maps
-        game.mapList = game.cache.getJSON('mapList');
-        game.mapList.forEach(function(key) {
-            game.load.json(key, '../data/maps/' + key + '.json');
-        });
-        //load the dialogs
-        game.dialog = {};
-        game.dialogList = game.cache.getJSON('dialogList');
-        game.dialogList.forEach(function(key) {
-            game.dialog[key] = game.load.json('dialog-' + key, '../data/dialog/' + key + '.json');
-        });
-        
-        game.items = game.cache.getJSON('itemList');
-        game.enemies = game.cache.getJSON('enemyList');
-
-        //this removes any dithering from scaling
-        //this gives similar results to phaser's tilemap scaling
-        Phaser.scaleModes.DEFAULT = 1;
-        //Load all textures described in the textures.json file
-
-        //load the textures
-        //TODO split this into folders
-        game.textures = game.cache.getJSON('textures');
-        for (var key in game.textures) {
-            if (game.textures.hasOwnProperty(key)) {
-                game.textures[key].forEach(function(texture) {
-                    if (texture.type === "image") {
-                        //regular image
-                        game.load.image(texture.key, '../assets/' + texture.key + '.png');
-                    }
-                    else if (texture.type === "sheet") {
-                        //spritesheet
-                        //each tile has a 1px border around it of transparency to avoid dithering
-                        //these files are created with the sheetMaker bash script in the assets folder
-                        //1px+16px+1px=18px
-                        game.load.spritesheet(texture.key, '../assets/' + texture.key + '.png', 18, 18);
-                    }
-
-                });
-            }
+            //this public function below creates a file dropper out of the gameDiv
+            //this way you can drop your saved jsons on it to load them
+            addFileDropper();
+            console.log("end of preload");
+            game.offsets = {
+                x: -Math.floor(game.width / (game.zoom * game.pxSize) / 2),
+                y: -Math.floor(game.height / (game.zoom * game.pxSize) / 2)
+            };
         }
-        //this public function below creates a file dropper out of the gameDiv
-        //this way you can drop your saved jsons on it to load them
-        addFileDropper();
+        console.log(game.offsets)
+
+        game.menuOpen = false;
+
+
+
+
     },
     reload: function() {
         game.map.destroy();
@@ -161,11 +179,10 @@ States.GameState.prototype = {
     },
     create: function() {
         game.stage.backgroundColor = '#111111'
-        //load the dialog
+            //load the dialog
         game.dialogList.forEach(function(character) {
             game.dialog[character] = game.cache.getJSON('dialog-' + character);
         });
-
         //a set keys for navigation
         game.cursors = game.input.keyboard.createCursorKeys();
         game.spaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
@@ -181,6 +198,7 @@ States.GameState.prototype = {
         game.mapData = game.cache.getJSON(game.mapKey);
         //adjust the offsets by the start position
         if (game.mapStart === null) {
+            console.log("null mapstart")
             game.offsets.x += game.mapData.start.x;
             game.offsets.y += game.mapData.start.y;
         }
@@ -197,7 +215,7 @@ States.GameState.prototype = {
         Render.all();
         //make all the menus
         game.infoPanel = Menu.create();
-        
+
         game.itemPanel = Menu.create();
         game.dialogPanel = Menu.create();
         game.selectionPanel = Menu.create();
@@ -217,7 +235,7 @@ States.GameState.prototype = {
         }
         //player's texture frame number
         game.player.frame = 0;
-        
+
     },
     rectangleTexture: function(w, h) {
         //this function recturns a bordered gray rectangle
@@ -413,3 +431,4 @@ function addFileDropper() {
         }
     });
 }
+

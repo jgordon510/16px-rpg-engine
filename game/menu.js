@@ -2,7 +2,7 @@ var Menu = {
     rectangleTexture: function(w, h, bgColor) {
         //this function recturns a bordered gray rectangle
         //for use in the selector menu.
-        var backgroundColor = bgColor ||0x111111
+        var backgroundColor = bgColor || 0x111111
         var graphics = game.add.graphics(0, 0);
         graphics.beginFill(backgroundColor);
         graphics.lineStyle(5, 0xAAAAAA, 1);
@@ -62,11 +62,19 @@ var Menu = {
     },
     infoPanel: function(settings) {
         console.log(settings)
-        //an infoPanel that takes a settings object:
-        //x,y,h,w,type:string,text:[strings]
+            //an infoPanel that takes a settings object:
+            //x,y,h,w,type:string,text:[strings]
         this.infoText = game.add.text(20, 20, '', this.style);
-        console.log("typetext")
-        this.typeText(this.infoText, settings.text, 0);
+        console.log("typetext");
+        if (typeof settings.callback !== 'undefined') {
+            console.log("with callback");
+            this.typeText(this.infoText, settings.text, 0, settings.callback);
+        }
+        else {
+            console.log("without callback")
+            this.typeText(this.infoText, settings.text, 0);
+        }
+
         this.group.add(this.infoText);
     },
     combat: function(settings) {
@@ -482,9 +490,9 @@ var Menu = {
     },
     typeText: function(sprite, text, startIndex, callback) { //needs a settings object
         console.log("running typetext")
-        //this types the text, char by char
+            //this types the text, char by char
         var characterIndex = 0;
-        
+
         addChar();
 
         function addChar() {
@@ -498,12 +506,13 @@ var Menu = {
                 //too much for panel, wait and clear
                 //then continue
                 if (sprite.height > Menu.panel.height - 50) {
-                    setTimeout(clear, 500);
-
-                    function clear() {
-                        sprite.setText('');
+                    setTimeout(function() {
+                        var words = sprite.text.split(" ");
+                        sprite.setText(words[words.length - 1]);
                         addChar(); //recursion
-                    }
+                    }, 300)
+
+
                 }
                 else {
                     //recursion
